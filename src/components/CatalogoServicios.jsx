@@ -1,13 +1,15 @@
 /* VISTA GENERAL DEL CATALOGO DE SERVICIOS - CRM PROFESSIONAL */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { TIPOS_SERVICIO } from "../data/servicios.js";
 import "../css/CatalogoServicios.css";
+import { serviciosService } from "../services/api.js";
 
 const TIPO_COLORS = {
   Remoto: { bg: "#f0fdf4", text: "#166534", dot: "#22c55e" }, // Verde ejecutivo
   Presencial: { bg: "#eff6ff", text: "#1e40af", dot: "#3b82f6" }, // Azul ejecutivo
   Otros: { bg: "#f8fafc", text: "#475569", dot: "#64748b" }, // Slate
+  Mantenimiento: { bg: "#f8fafc", text: "#475569", dot: "#64748b" },
 };
 
 const EMPTY = { nombre: "", tipo: "Remoto", costo: "" };
@@ -18,6 +20,7 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
     isEditing ? { ...servicio, costo: String(servicio.costo) } : { ...EMPTY },
   );
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const set = (f, v) => {
     setForm((p) => ({ ...p, [f]: v }));
@@ -29,16 +32,80 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
     if (!form.nombre.trim()) e.nombre = "El nombre del servicio es requerido";
     if (!form.costo || isNaN(Number(form.costo)) || Number(form.costo) <= 0)
       e.costo = "Ingresa un costo válido superior a $0";
-    return e;
+    setErrors(e);
+    return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
-    const e = validate();
-    if (Object.keys(e).length) {
-      setErrors(e);
-      return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate() || loading) return;
+
+    setLoading(true);
+    try {
+      let tipoServicioId = 1;
+      if (form.tipo === "Presencial") tipoServicioId = 2;
+      if (form.tipo === "Otros" || form.tipo === "Mantenimiento")
+        tipoServicioId = 3;
+
+      const payload = {
+        nombre: form.nombre.trim(),
+        tipo_servicio_id: tipoServicioId,
+        costo: parseFloat(form.costo),
+        activo: form.activo !== undefined ? form.activo : 1,
+      };
+
+      if (isEditing) {
+        const servicioEditado = await serviciosService.update(
+          servicio.id,
+          payload,
+        );
+
+        Swal.fire({
+          title: "Registro Actualizado",
+          text: `${servicioEditado.nombre} se guardó correctamente en el catálogo.`,
+          icon: "success",
+          confirmButtonColor: "#2563eb",
+          timer: 2000,
+        });
+
+        onSave({
+          id: servicio.id,
+          nombre: servicioEditado.nombre,
+          tipo: form.tipo,
+          costo: servicioEditado.costo,
+          activo: servicioEditado.activo,
+        });
+      } else {
+        /* ELIMINAR  */
+        const servicioGuardado = await serviciosService.create(payload);
+
+        Swal.fire({
+          title: "Servicio Registrado",
+          text: `${servicioGuardado.nombre} Servicio Registrado.`,
+          icon: "success",
+          confirmButtonColor: "#2563eb",
+          timer: 2000,
+        });
+
+        onSave({
+          id: servicioGuardado.id,
+          nombre: servicioGuardado.nombre,
+          tipo: form.tipo,
+          costo: servicioGuardado.costo,
+          activo: servicioGuardado.activo,
+        });
+      }
+      onClose();
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error de persistencia",
+        text: error.message || "No se pudo guardar la información.",
+      });
+    } finally {
+      setLoading(false);
     }
-    onSave({ ...form, costo: Number(form.costo), isEditing });
   };
 
   return (
@@ -59,6 +126,7 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
             className="sf-close"
             onClick={onClose}
             aria-label="Cerrar modal"
+            disabled={loading}
           >
             <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
               <path
@@ -81,6 +149,7 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
               placeholder="Ej. Soporte en sitio o mantenimiento preventivo"
               value={form.nombre}
               onChange={(e) => set("nombre", e.target.value)}
+              disabled={loading}
             />
             {errors.nombre && <span className="sf-error">{errors.nombre}</span>}
           </div>
@@ -92,6 +161,7 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
                 className="sf-select"
                 value={form.tipo}
                 onChange={(e) => set("tipo", e.target.value)}
+                disabled={loading}
               >
                 {TIPOS_SERVICIO.map((t) => (
                   <option key={t}>{t}</option>
@@ -109,8 +179,10 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
                   placeholder="0.00"
                   type="number"
                   min="0"
+                  step="0.01"
                   value={form.costo}
                   onChange={(e) => set("costo", e.target.value)}
+                  disabled={loading}
                 />
               </div>
               {errors.costo && <span className="sf-error">{errors.costo}</span>}
@@ -136,11 +208,23 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
         </div>
 
         <div className="sf-footer">
-          <button className="sf-btn sf-btn--secondary" onClick={onClose}>
+          <button
+            className="sf-btn sf-btn--secondary"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancelar
           </button>
-          <button className="sf-btn sf-btn--primary" onClick={handleSubmit}>
-            {isEditing ? "Guardar cambios" : "Registrar servicio"}
+          <button
+            className="sf-btn sf-btn--primary"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading
+              ? "Procesando..."
+              : isEditing
+                ? "Guardar cambios"
+                : "Registrar servicio"}
           </button>
         </div>
       </div>
@@ -148,26 +232,57 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
   );
 }
 
-export default function CatalogoServicios({ servicios, onUpdate }) {
+export default function CatalogoServicios() {
+  const [servicios, setServicios] = useState([]);
   const [search, setSearch] = useState("");
   const [filterTipo, setFilterTipo] = useState("Todos");
   const [formModal, setFormModal] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = ({ isEditing, ...servicio }) => {
-    if (isEditing) {
-      onUpdate(servicios.map((s) => (s.id === servicio.id ? servicio : s)));
-    } else {
-      const newId = Math.max(0, ...servicios.map((s) => s.id)) + 1;
-      onUpdate([...servicios, { ...servicio, id: newId }]);
-    }
-    setFormModal(null);
-    Swal.fire({
-      title: isEditing ? "Registro Actualizado" : "Servicio Registrado",
-      text: `${servicio.nombre} se guardó correctamente en el catálogo corporativo.`,
-      icon: "success",
-      confirmButtonColor: "#2563eb",
-      timer: 2000,
-      timerProgressBar: true,
+  useEffect(() => {
+    const cargarServicios = async () => {
+      try {
+        setLoading(true);
+        const data = await serviciosService.getAll({
+          tipo: filterTipo,
+          search,
+        });
+
+        const datosEstructurados = data.map((s) => ({
+          id: s.id,
+          nombre: s.nombre,
+          costo: s.costo,
+          tipo: s.tipo_nombre || s.tipo || "Otros",
+          activo: s.activo,
+        }));
+
+        setServicios(datosEstructurados);
+      } catch (error) {
+        console.error(error);
+        Swal.fire({
+          icon: "error",
+          title: "Error de carga",
+          text: "No se pudieron recuperar los servicios de la base de datos.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const delayDebounce = setTimeout(() => {
+      cargarServicios();
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [filterTipo, search]);
+
+  const handleSave = (servicio) => {
+    setServicios((prev) => {
+      const exists = prev.some((s) => s.id === servicio.id);
+      if (exists) {
+        return prev.map((s) => (s.id === servicio.id ? servicio : s));
+      }
+      return [servicio, ...prev];
     });
   };
 
@@ -181,30 +296,33 @@ export default function CatalogoServicios({ servicios, onUpdate }) {
       cancelButtonColor: "#64748b",
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
-    }).then((r) => {
+    }).then(async (r) => {
       if (r.isConfirmed) {
-        onUpdate(servicios.filter((sv) => sv.id !== s.id));
-        Swal.fire({
-          title: "Baja Procesada",
-          text: `${s.nombre} fue removido del sistema.`,
-          icon: "success",
-          confirmButtonColor: "#2563eb",
-          timer: 2000,
-          timerProgressBar: true,
-        });
+        try {
+          await serviciosService.delete(s.id);
+          setServicios((prev) => prev.filter((sv) => sv.id !== s.id));
+
+          Swal.fire({
+            title: "Baja Procesada",
+            text: `${s.nombre} fue removido del sistema.`,
+            icon: "success",
+            confirmButtonColor: "#2563eb",
+            timer: 2000,
+          });
+        } catch (error) {
+          Swal.fire(
+            "Error",
+            "No se pudo eliminar el servicio del servidor.",
+            "error",
+          );
+        }
       }
     });
   };
 
   const tipos = ["Todos", ...TIPOS_SERVICIO];
-  const filtered = servicios.filter((s) => {
-    const matchTipo = filterTipo === "Todos" || s.tipo === filterTipo;
-    const matchSearch =
-      !search.trim() ||
-      s.nombre.toLowerCase().includes(search.toLowerCase()) ||
-      s.tipo.toLowerCase().includes(search.toLowerCase());
-    return matchTipo && matchSearch;
-  });
+
+  const filtered = servicios;
 
   return (
     <div className="cs-container">
@@ -240,7 +358,9 @@ export default function CatalogoServicios({ servicios, onUpdate }) {
           <span className="cs-stat-label">Valor Total Catálogo</span>
           <span className="cs-stat-value cs-stat-value--blue">
             $
-            {servicios.reduce((a, s) => a + s.costo, 0).toLocaleString("es-MX")}{" "}
+            {servicios
+              .reduce((a, s) => a + Number(s.costo), 0)
+              .toLocaleString("es-MX", { minimumFractionDigits: 2 })}{" "}
             <span className="cs-currency">MXN</span>
           </span>
         </div>
@@ -290,7 +410,9 @@ export default function CatalogoServicios({ servicios, onUpdate }) {
             <div className="cs-th cs-col-actions cs-col-center">Acciones</div>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="cs-empty">Conectando con la base de datos...</div>
+          ) : filtered.length === 0 ? (
             <div className="cs-empty">
               No se encontraron soluciones de servicio bajo estos criterios.
             </div>
