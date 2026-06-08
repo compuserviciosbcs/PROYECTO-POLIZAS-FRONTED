@@ -66,3 +66,58 @@ export const serviciosService = {
     return data.data || data;
   },
 };
+
+export const empresasService = {
+  // ── GET: Obtener todas las empresas ──
+  getAll: async () => {
+    const response = await fetch(`${API_BASE_URL}/empresas`);
+    const data = await response.json();
+
+    if (!response.ok)
+      throw new Error(data.error || "Error al obtener las empresas");
+    return data.data || data;
+  },
+
+  // ── POST: Crear una nueva empresa ──
+  create: async (nuevaEmpresa) => {
+    const response = await fetch(`${API_BASE_URL}/empresas`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nuevaEmpresa),
+    });
+
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.error || "Error al crear la empresa");
+
+    return data.data || data;
+  },
+
+  // ── PUT: Modificar una empresa existente ──
+  update: async (id, datosActualizados) => {
+    const response = await fetch(`${API_BASE_URL}/empresas/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datosActualizados),
+    });
+
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.error || "Error al actualizar la empresa");
+
+    return data.data || data;
+  },
+
+  // ── DELETE: Dar de baja/eliminar una empresa ──
+  delete: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/empresas/${id}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json();
+    if (!response.ok)
+      throw new Error(data.error || "Error al eliminar la empresa");
+
+    return data.data || data;
+  },
+};

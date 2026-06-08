@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { TIPOS_SERVICIO } from "../data/servicios.js";
 import "../css/CatalogoServicios.css";
-import { serviciosService } from "../services/api.js";
+import { serviciosService } from "../services/servicioService.js";
 
 const TIPO_COLORS = {
   Remoto: { bg: "#f0fdf4", text: "#166534", dot: "#22c55e" }, // Verde ejecutivo
