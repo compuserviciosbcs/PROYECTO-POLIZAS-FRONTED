@@ -1,4 +1,4 @@
-/* ENRUTADOR PRINCIPAL DEL CRM CON ESTADOS EN MEMORIA */
+/* ENRUTADOR PRINCIPAL DEL CRM */
 import { useState } from "react";
 import {
   BrowserRouter as Router,
@@ -13,13 +13,14 @@ import CalendarView from "./components/CalendarView.jsx";
 import DirectorioEmpresas from "./components/DirectorioEmpresas.jsx";
 import GestionIncidencias from "./components/GestionIncidencias.jsx";
 import HistorialIncidencias from "./components/HistorialIncidencias.jsx";
-import { initialServicios } from "./data/servicios.js";
+import { useServicios } from "./services/useServicios.js";
 import { initialEmpresas } from "./data/empresas.js";
 import { initialIncidencias } from "./data/incidencias.js";
 import "./App.css";
 
 export default function App() {
-  const [servicios, setServicios] = useState(initialServicios);
+  const { servicios, crear, actualizar, eliminar } = useServicios();
+
   const [empresas, setEmpresas] = useState(initialEmpresas);
   const [incidencias, setIncidencias] = useState(initialIncidencias);
 
@@ -41,16 +42,21 @@ export default function App() {
                 />
               }
             />
+
             <Route path="/calendario" element={<CalendarView />} />
+
             <Route
               path="/servicios"
               element={
                 <CatalogoServicios
                   servicios={servicios}
-                  onUpdate={setServicios}
+                  onCrear={crear}
+                  onActualizar={actualizar}
+                  onEliminar={eliminar}
                 />
               }
             />
+
             <Route
               path="/polizas"
               element={<CatalogoPolicies catalogoServicios={servicios} />}
@@ -62,6 +68,7 @@ export default function App() {
                 <GestionIncidencias
                   incidencias={incidencias}
                   onUpdate={setIncidencias}
+                  empresas={empresas}
                 />
               }
             />

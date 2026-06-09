@@ -1,118 +1,37 @@
 /* VISTA GENERAL DEL CATALOGO DE POLIZAS */
 import { useState } from "react";
-import Swal from "sweetalert2";
 import PolicyModal from "./PolicyModal.jsx";
 import PolicyFormModal from "./PolicyFormModal.jsx";
-import { initialData } from "../data/policies.js";
+import { usePolicies } from "../services/usePolicies.js";
 import "../css/CatalogoPolicies.css";
 
+const GRUPOS = [
+  "Pólizas de soporte general TI",
+  "Pólizas de soporte CONTPAQi®",
+  "Pólizas Combo",
+];
+
+const FILTER_OPTIONS = ["Todos", ...GRUPOS];
+
 export default function CatalogoPolicies({ catalogoServicios = [] }) {
-  const [data, setData] = useState(initialData);
   const [filter, setFilter] = useState("Todos");
   const [search, setSearch] = useState("");
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [formModal, setFormModal] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [nextId, setNextId] = useState(10);
-
-  const filterOptions = ["Todos", ...Object.keys(initialData)];
   const totalPages = 3;
 
-  const handleSave = ({ policy, grupo, isEditing }) => {
-    setData((prev) => {
-      const next = { ...prev };
+  const { filteredData, loading, error, handleSave, handleDelete } =
+    usePolicies(search, filter);
 
-      if (isEditing) {
-        const oldGrupo = formModal.groupName;
-        if (oldGrupo !== grupo) {
-          next[oldGrupo] = next[oldGrupo].filter((p) => p.id !== policy.id);
-          next[grupo] = [...(next[grupo] || []), policy];
-        } else {
-          next[grupo] = next[grupo].map((p) =>
-            p.id === policy.id ? policy : p,
-          );
-        }
-      } else {
-        const newPolicy = { ...policy, id: nextId };
-        setNextId((id) => id + 1);
-        next[grupo] = [...(next[grupo] || []), newPolicy];
-      }
-
-      return next;
+  const onSaveSubmit = async ({ policy, grupo, isEditing }) => {
+    const ok = await handleSave({
+      policy,
+      grupo,
+      oldGrupoName: formModal?.groupName,
     });
-
-    setFormModal(null);
-    Swal.fire({
-      title: isEditing ? "Cambios guardados" : "Póliza creada",
-      text: isEditing
-        ? `${policy.nombre} fue actualizada correctamente.`
-        : `${policy.nombre} fue añadida al catálogo.`,
-      icon: "success",
-      confirmButtonColor: "#3b82f6",
-      timer: 2200,
-      timerProgressBar: true,
-    });
+    if (ok) setFormModal(null);
   };
-
-  const handleDelete = (groupName, policyId, policyName) => {
-    Swal.fire({
-      title: "¿Eliminar póliza?",
-      html: `<p style="color:#6b7280;font-size:0.9rem">Esta acción eliminará <strong style="color:#1a1d2e">${policyName}</strong> de forma permanente.</p>`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-      borderRadius: "12px",
-      customClass: {
-        popup: "swal-custom-popup",
-        title: "swal-custom-title",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setData((prev) => ({
-          ...prev,
-          [groupName]: prev[groupName].filter((p) => p.id !== policyId),
-        }));
-        Swal.fire({
-          title: "Eliminada",
-          text: `${policyName} ha sido eliminada.`,
-          icon: "success",
-          confirmButtonColor: "#3b82f6",
-          timer: 2000,
-          timerProgressBar: true,
-        });
-      }
-    });
-  };
-
-  const getFilteredData = () => {
-    let filtered = {};
-    if (filter === "Todos") {
-      filtered = { ...data };
-    } else {
-      filtered = { [filter]: data[filter] || [] };
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      filtered = Object.fromEntries(
-        Object.entries(filtered)
-          .map(([group, policies]) => [
-            group,
-            policies.filter(
-              (p) =>
-                p.nombre.toLowerCase().includes(q) ||
-                p.tipo.toLowerCase().includes(q),
-            ),
-          ])
-          .filter(([, policies]) => policies.length > 0),
-      );
-    }
-    return filtered;
-  };
-
-  const filteredData = getFilteredData();
 
   return (
     <div className="catalogo-container">
@@ -125,7 +44,7 @@ export default function CatalogoPolicies({ catalogoServicios = [] }) {
         </button>
 
         <div className="filter-tabs">
-          {filterOptions.map((opt) => (
+          {FILTER_OPTIONS.map((opt) => (
             <button
               key={opt}
               className={`filter-tab ${filter === opt ? "filter-tab--active" : ""}`}
@@ -161,56 +80,67 @@ export default function CatalogoPolicies({ catalogoServicios = [] }) {
 
       {/* Tables */}
       <div className="tables-wrapper">
-        {Object.entries(filteredData).map(([groupName, policies]) => (
-          <div key={groupName} className="policy-group">
-            <div className="policy-table">
-              <div className="policy-table-header">
-                <span>ID</span>
-                <span>{groupName}</span>
-                <span className="col-acciones">Acciones</span>
-              </div>
-              {policies.length === 0 ? (
-                <div className="policy-table-empty">
-                  No hay pólizas en este grupo.
-                </div>
-              ) : (
-                policies.map((policy, idx) => (
-                  <div
-                    key={policy.id}
-                    className={`policy-row ${idx % 2 === 0 ? "policy-row--even" : ""}`}
-                  >
-                    <span className="col-id">{policy.id}</span>
-                    <span className="col-nombre">{policy.nombre}</span>
-                    <div className="col-actions">
-                      <button
-                        className="action-btn action-btn--view"
-                        onClick={() => setSelectedPolicy(policy)}
-                      >
-                        Ver
-                      </button>
-                      <button
-                        className="action-btn action-btn--edit"
-                        onClick={() => setFormModal({ policy, groupName })}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="action-btn action-btn--delete "
-                        onClick={() =>
-                          handleDelete(groupName, policy.id, policy.nombre)
-                        }
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        ))}
+        {loading && (
+          <div className="policy-table-empty">Cargando catálogo...</div>
+        )}
 
-        {Object.keys(filteredData).length === 0 && (
+        {!loading && error && (
+          <div className="policy-table-empty" style={{ color: "#ef4444" }}>
+            Error: {error}
+          </div>
+        )}
+
+        {!loading &&
+          !error &&
+          Object.entries(filteredData).map(([groupName, policies]) => (
+            <div key={groupName} className="policy-group">
+              <div className="policy-table">
+                <div className="policy-table-header">
+                  <span>ID</span>
+                  <span>{groupName}</span>
+                  <span className="col-acciones">Acciones</span>
+                </div>
+
+                {policies.length === 0 ? (
+                  <div className="policy-table-empty">
+                    No hay pólizas en este grupo.
+                  </div>
+                ) : (
+                  policies.map((policy, idx) => (
+                    <div
+                      key={policy.id}
+                      className={`policy-row ${idx % 2 === 0 ? "policy-row--even" : ""}`}
+                    >
+                      <span className="col-id">{policy.id}</span>
+                      <span className="col-nombre">{policy.nombre}</span>
+                      <div className="col-actions">
+                        <button
+                          className="action-btn action-btn--view"
+                          onClick={() => setSelectedPolicy(policy)}
+                        >
+                          Ver
+                        </button>
+                        <button
+                          className="action-btn action-btn--edit"
+                          onClick={() => setFormModal({ policy, groupName })}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          className="action-btn action-btn--delete"
+                          onClick={() => handleDelete(policy, groupName)}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          ))}
+
+        {!loading && !error && Object.keys(filteredData).length === 0 && (
           <div className="no-results">No se encontraron pólizas.</div>
         )}
       </div>
@@ -256,7 +186,7 @@ export default function CatalogoPolicies({ catalogoServicios = [] }) {
           policy={formModal.policy}
           groupName={formModal.groupName}
           onClose={() => setFormModal(null)}
-          onSave={handleSave}
+          onSave={onSaveSubmit}
           catalogoServicios={catalogoServicios}
         />
       )}

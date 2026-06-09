@@ -68,15 +68,18 @@ export default function PolicyFormModal({
   const handleInputChange = (field, value) => {
     let cleanValue = value;
 
-    if (LIMITS[field] && cleanValue.length > LIMITS[field]) {
-      return;
-    }
+    if (LIMITS[field] && cleanValue.length > LIMITS[field]) return;
 
     if (field === "nombre" || field === "tipo") {
       cleanValue = cleanValue.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ .,_#-]/g, "");
     }
 
     setForm((f) => ({ ...f, [field]: cleanValue }));
+    setErrors((e) => ({ ...e, [field]: undefined }));
+  };
+
+  const setField = (field, value) => {
+    setForm((f) => ({ ...f, [field]: value }));
     setErrors((e) => ({ ...e, [field]: undefined }));
   };
 
@@ -116,7 +119,6 @@ export default function PolicyFormModal({
   const validate = () => {
     const e = {};
     const trimmedForm = {};
-
     Object.keys(form).forEach((key) => {
       if (typeof form[key] === "string") trimmedForm[key] = form[key].trim();
     });
@@ -159,6 +161,7 @@ export default function PolicyFormModal({
         sla_solucion: form.sla_solucion.trim(),
         servicios: serviciosNombres,
         precio: precioTexto,
+        precioNum: total,
         descuento: form.descuento,
         serviciosIds: form.serviciosIds,
       },
@@ -319,7 +322,7 @@ export default function PolicyFormModal({
               <div className="pf-toggle-row">
                 <button
                   className={`pf-toggle ${form.activa ? "pf-toggle--on" : ""}`}
-                  onClick={() => set("activa", !form.activa)}
+                  onClick={() => setField("activa", !form.activa)}
                 >
                   <span className="pf-toggle-knob" />
                 </button>
@@ -411,7 +414,7 @@ export default function PolicyFormModal({
                   onChange={(e) => {
                     const val = e.target.value.replace(/[^0-9]/g, "");
                     const num = Number(val);
-                    set("descuento", val === "" ? 0 : Math.min(100, num));
+                    setField("descuento", val === "" ? 0 : Math.min(100, num));
                   }}
                 />
               </div>
