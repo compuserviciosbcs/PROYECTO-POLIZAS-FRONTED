@@ -1,7 +1,7 @@
 /* VISTA GENERAL DEL DIRECTORIO DE EMPRESASS Y CRUD DE EMPRESAS */
 import { useState } from "react";
-import Swal from "sweetalert2";
 import EmpresaExpediente from "./EmpresaExpediente.jsx";
+import { useEmpresas } from "../services/useEmpresas.js";
 import "../css/DirectorioEmpresas.css";
 
 const GIROS = [
@@ -18,7 +18,6 @@ const GIROS = [
   "Otro",
 ];
 
-/* Datos de empresa por defecto */
 const EMPTY_EMPRESA = {
   nombre: "",
   rfc: "",
@@ -117,7 +116,6 @@ function EmpresaFormModal({ empresa, onClose, onSave }) {
 
         <div className="ef-body">
           <p className="ef-section-lbl">Datos de la empresa</p>
-
           <Field
             label="Razón social"
             field="nombre"
@@ -239,53 +237,40 @@ function EmpresaFormModal({ empresa, onClose, onSave }) {
   );
 }
 
-export default function DirectorioEmpresas({ empresas, onUpdate }) {
+export default function DirectorioEmpresas() {
   const [search, setSearch] = useState("");
   const [filterGiro, setFilterGiro] = useState("Todos");
   const [filterEstatus, setFilterEstatus] = useState("Todos");
   const [formModal, setFormModal] = useState(null);
   const [expediente, setExpediente] = useState(null);
 
-  const handleSave = ({ isEditing, ...empresa }) => {
+  const {
+    empresas,
+    loading,
+    error,
+    crear,
+    actualizar,
+    eliminar,
+    cargarExpediente,
+    crearUsuario,
+    actualizarLocal,
+  } = useEmpresas({ search, giro: filterGiro, estatus: filterEstatus });
+
+  const handleSave = async ({ isEditing, ...form }) => {
     if (isEditing) {
-      onUpdate(empresas.map((e) => (e.id === empresa.id ? empresa : e)));
+      const actualizada = await actualizar(form.id, form);
+      if (actualizada && expediente?.id === form.id) {
+        setExpediente((prev) => ({ ...prev, ...actualizada }));
+      }
     } else {
-      const newId = Math.max(0, ...empresas.map((e) => e.id)) + 1;
-      onUpdate([...empresas, { ...empresa, id: newId }]);
+      await crear(form);
     }
     setFormModal(null);
-    Swal.fire({
-      title: isEditing ? "Cambios guardados" : "Empresa creada",
-      text: `${empresa.nombre} fue ${isEditing ? "actualizada" : "añadida"} correctamente.`,
-      icon: "success",
-      confirmButtonColor: "#3b82f6",
-      timer: 2200,
-      timerProgressBar: true,
-    });
   };
 
-  const handleDelete = (emp) => {
-    Swal.fire({
-      title: "¿Eliminar empresa?",
-      html: `<p style="color:#6b7280;font-size:.9rem">Se eliminará <strong style="color:#1a1d2e">${emp.nombre}</strong> y todo su expediente.</p>`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#6b7280",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
-    }).then((r) => {
-      if (r.isConfirmed) {
-        onUpdate(empresas.filter((e) => e.id !== emp.id));
-        Swal.fire({
-          title: "Eliminada",
-          icon: "success",
-          confirmButtonColor: "#3b82f6",
-          timer: 2000,
-          timerProgressBar: true,
-        });
-      }
-    });
+  const handleVerExpediente = async (emp) => {
+    const completo = await cargarExpediente(emp.id);
+    if (completo) setExpediente(completo);
   };
 
   const filtered = empresas.filter((e) => {
@@ -313,14 +298,12 @@ export default function DirectorioEmpresas({ empresas, onUpdate }) {
       <EmpresaExpediente
         empresa={expediente}
         onBack={() => setExpediente(null)}
-        onEdit={(emp) => {
-          setExpediente(emp);
-          setFormModal({ empresa: emp });
-        }}
+        onEdit={(emp) => setFormModal({ empresa: emp })}
         onUpdateEmpresa={(updated) => {
-          onUpdate(empresas.map((e) => (e.id === updated.id ? updated : e)));
+          actualizarLocal(updated);
           setExpediente(updated);
         }}
+        onCrearUsuario={crearUsuario}
       />
     );
   }
@@ -360,7 +343,6 @@ export default function DirectorioEmpresas({ empresas, onUpdate }) {
         <button className="btn-add" onClick={() => setFormModal({})}>
           <span className="btn-add-icon">+</span> Añadir empresa
         </button>
-
         <div className="dir-filters">
           <select
             className="dir-select"
@@ -381,7 +363,6 @@ export default function DirectorioEmpresas({ empresas, onUpdate }) {
             <option value="inactivo">Inactivas</option>
           </select>
         </div>
-
         <div className="search-wrap" style={{ flex: 1 }}>
           <svg className="search-icon" viewBox="0 0 20 20" fill="none">
             <circle cx="9" cy="9" r="6" stroke="#9ca3af" strokeWidth="1.5" />
@@ -401,115 +382,123 @@ export default function DirectorioEmpresas({ empresas, onUpdate }) {
         </div>
       </div>
 
-      {/* Grid de tarjetas */}
-      <div className="dir-grid">
-        {filtered.length === 0 && (
-          <div className="dir-empty">No se encontraron empresas.</div>
-        )}
-        {filtered.map((emp) => (
-          <div
-            key={emp.id}
-            className="dir-card"
-            onClick={() => setExpediente(emp)}
-          >
-            <div className="dir-card-top">
-              <div className="dir-card-avatar">{emp.nombre.charAt(0)}</div>
-              <span
-                className={`dir-estatus-pill ${emp.estatus === "activo" ? "dir-estatus-pill--active" : "dir-estatus-pill--inactive"}`}
-              >
+      {/* Estados de carga */}
+      {loading && <div className="dir-empty">Cargando directorio...</div>}
+      {!loading && error && (
+        <div className="dir-empty" style={{ color: "#ef4444" }}>
+          Error: {error}
+        </div>
+      )}
+
+      {/* Grid */}
+      {!loading && !error && (
+        <div className="dir-grid">
+          {filtered.length === 0 && (
+            <div className="dir-empty">No se encontraron empresas.</div>
+          )}
+          {filtered.map((emp) => (
+            <div
+              key={emp.id}
+              className="dir-card"
+              onClick={() => handleVerExpediente(emp)}
+            >
+              <div className="dir-card-top">
+                <div className="dir-card-avatar">{emp.nombre.charAt(0)}</div>
                 <span
-                  className={`dir-estatus-dot ${emp.estatus === "activo" ? "dir-estatus-dot--active" : "dir-estatus-dot--inactive"}`}
-                />
-                {emp.estatus === "activo" ? "Activa" : "Inactiva"}
-              </span>
-            </div>
-
-            <div className="dir-card-body">
-              <h3 className="dir-card-nombre">{emp.nombre}</h3>
-              <p className="dir-card-rfc">{emp.rfc}</p>
-
-              <div className="dir-card-meta">
-                <span className="dir-card-giro-badge">{emp.giro}</span>
-              </div>
-
-              <div className="dir-card-info">
-                <div className="dir-info-row">
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M2.5 6.5l7.5 5 7.5-5M3 5h14a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z"
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <span>{emp.email}</span>
-                </div>
-                <div className="dir-info-row">
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-                    <path
-                      d="M3 5a2 2 0 012-2h1.5a.5.5 0 01.5.5v3a.5.5 0 01-.146.354L5.5 8.207A11.02 11.02 0 009.793 12.5l1.353-1.354A.5.5 0 0111.5 11h3a.5.5 0 01.5.5V13a2 2 0 01-2 2h-1C6.716 15 3 11.284 3 6V5z"
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                  <span>{emp.telefono}</span>
-                </div>
-                <div className="dir-info-row">
-                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
-                    <circle
-                      cx="10"
-                      cy="8"
-                      r="3"
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z"
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                    />
-                  </svg>
-                  <span className="dir-info-dir">{emp.direccion}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="dir-card-footer">
-              <div className="dir-card-badges">
-                <span className="dir-mini-badge dir-mini-badge--blue">
-                  {emp.polizas.filter((p) => p.activa).length} póliza
-                  {emp.polizas.filter((p) => p.activa).length !== 1 ? "s" : ""}
-                </span>
-                <span className="dir-mini-badge dir-mini-badge--gray">
-                  {emp.usuarios.length} usuario
-                  {emp.usuarios.length !== 1 ? "s" : ""}
-                </span>
-                <span className="dir-mini-badge dir-mini-badge--orange">
-                  {emp.incidencias.length} ticket
-                  {emp.incidencias.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <div
-                className="dir-card-actions"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="action-btn action-btn--edit"
-                  onClick={() => setFormModal({ empresa: emp })}
+                  className={`dir-estatus-pill ${emp.estatus === "activo" ? "dir-estatus-pill--active" : "dir-estatus-pill--inactive"}`}
                 >
-                  Editar
-                </button>
-                <button
-                  className="action-btn action-btn--delete"
-                  onClick={() => handleDelete(emp)}
+                  <span
+                    className={`dir-estatus-dot ${emp.estatus === "activo" ? "dir-estatus-dot--active" : "dir-estatus-dot--inactive"}`}
+                  />
+                  {emp.estatus === "activo" ? "Activa" : "Inactiva"}
+                </span>
+              </div>
+              <div className="dir-card-body">
+                <h3 className="dir-card-nombre">{emp.nombre}</h3>
+                <p className="dir-card-rfc">{emp.rfc}</p>
+                <div className="dir-card-meta">
+                  <span className="dir-card-giro-badge">{emp.giro}</span>
+                </div>
+                <div className="dir-card-info">
+                  <div className="dir-info-row">
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+                      <path
+                        d="M2.5 6.5l7.5 5 7.5-5M3 5h14a1 1 0 011 1v8a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z"
+                        stroke="#9ca3af"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <span>{emp.email}</span>
+                  </div>
+                  <div className="dir-info-row">
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+                      <path
+                        d="M3 5a2 2 0 012-2h1.5a.5.5 0 01.5.5v3a.5.5 0 01-.146.354L5.5 8.207A11.02 11.02 0 009.793 12.5l1.353-1.354A.5.5 0 0111.5 11h3a.5.5 0 01.5.5V13a2 2 0 01-2 2h-1C6.716 15 3 11.284 3 6V5z"
+                        stroke="#9ca3af"
+                        strokeWidth="1.5"
+                      />
+                    </svg>
+                    <span>{emp.telefono}</span>
+                  </div>
+                  <div className="dir-info-row">
+                    <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+                      <circle
+                        cx="10"
+                        cy="8"
+                        r="3"
+                        stroke="#9ca3af"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z"
+                        stroke="#9ca3af"
+                        strokeWidth="1.5"
+                      />
+                    </svg>
+                    <span className="dir-info-dir">{emp.direccion}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="dir-card-footer">
+                <div className="dir-card-badges">
+                  <span className="dir-mini-badge dir-mini-badge--blue">
+                    {emp.polizas.filter((p) => p.activa).length} póliza
+                    {emp.polizas.filter((p) => p.activa).length !== 1
+                      ? "s"
+                      : ""}
+                  </span>
+                  <span className="dir-mini-badge dir-mini-badge--gray">
+                    {emp.usuarios.length} usuario
+                    {emp.usuarios.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="dir-mini-badge dir-mini-badge--orange">
+                    {emp.incidencias.length} ticket
+                    {emp.incidencias.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
+                <div
+                  className="dir-card-actions"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Eliminar
-                </button>
+                  <button
+                    className="action-btn action-btn--edit"
+                    onClick={() => setFormModal({ empresa: emp })}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="action-btn action-btn--delete"
+                    onClick={() => eliminar(emp)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {formModal && (
         <EmpresaFormModal

@@ -22,6 +22,7 @@ const CAMBIO_CONFIG = {
   Alta: { bg: "#dcfce7", text: "#166534" },
   Baja: { bg: "#fee2e2", text: "#b91c1c" },
   Modificación: { bg: "#eff6ff", text: "#1d4ed8" },
+  Modificacion: { bg: "#eff6ff", text: "#1d4ed8" },
   Renovación: { bg: "#faf5ff", text: "#6b21a8" },
 };
 
@@ -112,20 +113,21 @@ export default function EmpresaExpediente({
   empresa,
   onBack,
   onUpdateEmpresa,
+  onCrearUsuario,
 }) {
   const [tab, setTab] = useState("info");
   const [usuarioModal, setUsuarioModal] = useState(null);
 
   const update = (patch) => onUpdateEmpresa({ ...empresa, ...patch });
 
-  const handleSaveUsuario = ({ isEditing, ...u }) => {
+  const handleSaveUsuario = async ({ isEditing, ...u }) => {
     if (isEditing) {
       update({
         usuarios: empresa.usuarios.map((x) => (x.id === u.id ? u : x)),
       });
     } else {
-      const newId = Math.max(0, ...empresa.usuarios.map((x) => x.id)) + 1;
-      update({ usuarios: [...empresa.usuarios, { ...u, id: newId }] });
+      const creado = await onCrearUsuario(empresa.id, u);
+      if (!creado) return; // error ya manejado en el hook
     }
     setUsuarioModal(null);
   };
@@ -417,30 +419,30 @@ export default function EmpresaExpediente({
           </div>
         </div>
         <div className="exp-header-kpis">
-          <div className="exp-header-kpi">
-            <span className="exp-kpi-val">
-              {empresa.polizas.filter((p) => p.activa).length}
-            </span>
-            <span className="exp-kpi-lbl">Pólizas activas</span>
-          </div>
-          <div className="exp-header-kpi">
-            <span className="exp-kpi-val">{empresa.usuarios.length}</span>
-            <span className="exp-kpi-lbl">Usuarios</span>
-          </div>
-          <div className="exp-header-kpi">
-            <span className="exp-kpi-val">{empresa.incidencias.length}</span>
-            <span className="exp-kpi-lbl">Tickets totales</span>
-          </div>
-          <div className="exp-header-kpi">
-            <span className="exp-kpi-val exp-kpi-val--orange">
-              {
-                empresa.incidencias.filter(
-                  (i) => i.estatus === "abierto" || i.estatus === "pendiente",
-                ).length
-              }
-            </span>
-            <span className="exp-kpi-lbl">Tickets abiertos</span>
-          </div>
+          {[
+            {
+              val: empresa.polizas.filter((p) => p.activa).length,
+              lbl: "Pólizas activas",
+            },
+            { val: empresa.usuarios.length, lbl: "Usuarios" },
+            { val: empresa.incidencias.length, lbl: "Tickets totales" },
+            {
+              val: empresa.incidencias.filter(
+                (i) => i.estatus === "abierto" || i.estatus === "pendiente",
+              ).length,
+              lbl: "Tickets abiertos",
+              orange: true,
+            },
+          ].map(({ val, lbl, orange }) => (
+            <div key={lbl} className="exp-header-kpi">
+              <span
+                className={`exp-kpi-val ${orange ? "exp-kpi-val--orange" : ""}`}
+              >
+                {val}
+              </span>
+              <span className="exp-kpi-lbl">{lbl}</span>
+            </div>
+          ))}
         </div>
       </div>
 
