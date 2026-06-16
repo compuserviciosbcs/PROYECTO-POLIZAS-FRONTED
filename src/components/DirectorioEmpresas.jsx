@@ -237,7 +237,7 @@ function EmpresaFormModal({ empresa, onClose, onSave }) {
   );
 }
 
-export default function DirectorioEmpresas() {
+export default function DirectorioEmpresas({ catalogoPolizas = [] }) {
   const [search, setSearch] = useState("");
   const [filterGiro, setFilterGiro] = useState("Todos");
   const [filterEstatus, setFilterEstatus] = useState("Todos");
@@ -254,6 +254,7 @@ export default function DirectorioEmpresas() {
     cargarExpediente,
     crearUsuario,
     actualizarLocal,
+    vincularPoliza,
   } = useEmpresas({ search, giro: filterGiro, estatus: filterEstatus });
 
   const handleSave = async ({ isEditing, ...form }) => {
@@ -304,6 +305,8 @@ export default function DirectorioEmpresas() {
           setExpediente(updated);
         }}
         onCrearUsuario={crearUsuario}
+        onVincularPoliza={vincularPoliza}
+        catalogoPolizas={catalogoPolizas}
       />
     );
   }

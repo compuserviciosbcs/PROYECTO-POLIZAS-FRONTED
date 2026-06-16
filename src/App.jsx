@@ -14,15 +14,22 @@ import DirectorioEmpresas from "./components/DirectorioEmpresas.jsx";
 import GestionIncidencias from "./components/GestionIncidencias.jsx";
 import HistorialIncidencias from "./components/HistorialIncidencias.jsx";
 import { useServicios } from "./services/useServicios.js";
-import { initialEmpresas } from "./data/empresas.js";
+import { usePolicies } from "./services/usePolicies.js";
 import { initialIncidencias } from "./data/incidencias.js";
 import "./App.css";
 
 export default function App() {
-  const { servicios, crear, actualizar, eliminar } = useServicios();
-
-  const [empresas, setEmpresas] = useState(initialEmpresas);
   const [incidencias, setIncidencias] = useState(initialIncidencias);
+
+  const {
+    servicios,
+    crear: crearServicio,
+    actualizar: actualizarServicio,
+    eliminar: eliminarServicio,
+  } = useServicios();
+
+  const { filteredData: polizasAgrupadas } = usePolicies("", "Todos");
+  const catalogoPolizas = Object.values(polizasAgrupadas).flat();
 
   return (
     <Router>
@@ -35,12 +42,7 @@ export default function App() {
 
             <Route
               path="/directorio"
-              element={
-                <DirectorioEmpresas
-                  empresas={empresas}
-                  onUpdate={setEmpresas}
-                />
-              }
+              element={<DirectorioEmpresas catalogoPolizas={catalogoPolizas} />}
             />
 
             <Route path="/calendario" element={<CalendarView />} />
@@ -50,9 +52,9 @@ export default function App() {
               element={
                 <CatalogoServicios
                   servicios={servicios}
-                  onCrear={crear}
-                  onActualizar={actualizar}
-                  onEliminar={eliminar}
+                  onCrear={crearServicio}
+                  onActualizar={actualizarServicio}
+                  onEliminar={eliminarServicio}
                 />
               }
             />
@@ -68,7 +70,6 @@ export default function App() {
                 <GestionIncidencias
                   incidencias={incidencias}
                   onUpdate={setIncidencias}
-                  empresas={empresas}
                 />
               }
             />

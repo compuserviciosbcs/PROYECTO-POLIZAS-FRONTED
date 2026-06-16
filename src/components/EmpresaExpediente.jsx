@@ -109,14 +109,172 @@ function UsuarioFormModal({ usuario, onClose, onSave }) {
   );
 }
 
+function VincularPolizaModal({ catalogoPolizas = [], onClose, onSave }) {
+  const [form, setForm] = useState({
+    poliza_id: "",
+    vigencia: "",
+    vencimiento: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  const set = (f, v) => {
+    setForm((p) => ({ ...p, [f]: v }));
+    setErrors((e) => ({ ...e, [f]: undefined }));
+  };
+
+  const validate = () => {
+    const e = {};
+    if (!form.poliza_id) e.poliza_id = "Selecciona una póliza";
+    if (!form.vigencia) e.vigencia = "Requerido";
+    if (!form.vencimiento) e.vencimiento = "Requerido";
+    if (form.vigencia && form.vencimiento && form.vencimiento <= form.vigencia)
+      e.vencimiento = "Debe ser posterior a la vigencia";
+    return e;
+  };
+
+  const handleSubmit = async () => {
+    const e = validate();
+    if (Object.keys(e).length) {
+      setErrors(e);
+      return;
+    }
+    setSaving(true);
+    await onSave({
+      poliza_id: Number(form.poliza_id),
+      vigencia: form.vigencia,
+      vencimiento: form.vencimiento,
+    });
+    setSaving(false);
+  };
+
+  const preview = catalogoPolizas.find((p) => p.id === Number(form.poliza_id));
+
+  return (
+    <div className="uf-overlay" onClick={onClose}>
+      <div className="uf-card uf-card--md" onClick={(e) => e.stopPropagation()}>
+        <div className="uf-header">
+          <div>
+            <p className="uf-modal-sub">Expediente de empresa</p>
+            <h2 className="uf-title">Vincular póliza</h2>
+          </div>
+          <button className="uf-close" onClick={onClose}>
+            <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+              <path
+                d="M5 5l10 10M15 5L5 15"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div className="uf-body">
+          <div className="uf-field">
+            <label className="uf-label">
+              Póliza del catálogo <span className="uf-req">*</span>
+            </label>
+            <select
+              className={`uf-input uf-select ${errors.poliza_id ? "uf-input--error" : ""}`}
+              value={form.poliza_id}
+              onChange={(e) => set("poliza_id", e.target.value)}
+            >
+              <option value="">Seleccionar póliza...</option>
+              {catalogoPolizas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} — {p.tipo}
+                </option>
+              ))}
+            </select>
+            {errors.poliza_id && (
+              <span className="uf-error">{errors.poliza_id}</span>
+            )}
+          </div>
+
+          {preview && (
+            <div className="vp-preview">
+              <div className="vp-preview-row">
+                <span className="vp-preview-nombre">{preview.nombre}</span>
+              </div>
+              <div className="vp-preview-row">
+                <span className="vp-preview-meta">
+                  SLA resp: {preview.sla_respuesta || "—"}
+                </span>
+                <span className="vp-preview-meta">
+                  SLA sol: {preview.sla_solucion || "—"}
+                </span>
+                <span className="vp-preview-meta">
+                  {preview.duracion || ""}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="uf-row">
+            <div className="uf-field uf-field--grow">
+              <label className="uf-label">
+                Vigencia desde <span className="uf-req">*</span>
+              </label>
+              <input
+                type="date"
+                className={`uf-input ${errors.vigencia ? "uf-input--error" : ""}`}
+                value={form.vigencia}
+                onChange={(e) => set("vigencia", e.target.value)}
+              />
+              {errors.vigencia && (
+                <span className="uf-error">{errors.vigencia}</span>
+              )}
+            </div>
+            <div className="uf-field uf-field--grow">
+              <label className="uf-label">
+                Vencimiento <span className="uf-req">*</span>
+              </label>
+              <input
+                type="date"
+                className={`uf-input ${errors.vencimiento ? "uf-input--error" : ""}`}
+                value={form.vencimiento}
+                onChange={(e) => set("vencimiento", e.target.value)}
+              />
+              {errors.vencimiento && (
+                <span className="uf-error">{errors.vencimiento}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="uf-footer">
+          <button
+            className="uf-btn uf-btn--secondary"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Cancelar
+          </button>
+          <button
+            className="uf-btn uf-btn--primary"
+            onClick={handleSubmit}
+            disabled={saving}
+          >
+            {saving ? "Vinculando..." : "Vincular póliza"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function EmpresaExpediente({
   empresa,
   onBack,
   onUpdateEmpresa,
   onCrearUsuario,
+  onVincularPoliza,
+  catalogoPolizas = [],
 }) {
   const [tab, setTab] = useState("info");
   const [usuarioModal, setUsuarioModal] = useState(null);
+  const [vincularModal, setVincularModal] = useState(false);
 
   const update = (patch) => onUpdateEmpresa({ ...empresa, ...patch });
 
@@ -127,7 +285,7 @@ export default function EmpresaExpediente({
       });
     } else {
       const creado = await onCrearUsuario(empresa.id, u);
-      if (!creado) return; // error ya manejado en el hook
+      if (!creado) return;
     }
     setUsuarioModal(null);
   };
@@ -145,6 +303,22 @@ export default function EmpresaExpediente({
     }).then((r) => {
       if (r.isConfirmed)
         update({ usuarios: empresa.usuarios.filter((x) => x.id !== u.id) });
+    });
+  };
+
+  const handleVincularPoliza = async (datos) => {
+    const vinculada = await onVincularPoliza(empresa.id, datos);
+    if (!vinculada) return;
+    // Añadir a la lista local del expediente
+    update({ polizas: [...empresa.polizas, vinculada] });
+    setVincularModal(false);
+    Swal.fire({
+      title: "Póliza vinculada",
+      text: `${vinculada.nombre || "La póliza"} fue vinculada correctamente.`,
+      icon: "success",
+      confirmButtonColor: "#3b82f6",
+      timer: 2000,
+      timerProgressBar: true,
     });
   };
 
@@ -243,15 +417,34 @@ export default function EmpresaExpediente({
 
   const renderPolizas = () => (
     <div>
+      <div className="exp-section-toolbar">
+        <p className="exp-section-count">
+          {empresa.polizas.length} póliza
+          {empresa.polizas.length !== 1 ? "s" : ""} vinculadas
+          {" · "}
+          <span style={{ color: "#16a34a", fontWeight: 600 }}>
+            {empresa.polizas.filter((p) => p.activa).length} vigente
+            {empresa.polizas.filter((p) => p.activa).length !== 1 ? "s" : ""}
+          </span>
+        </p>
+        <button
+          className="btn-add btn-add--sm"
+          onClick={() => setVincularModal(true)}
+        >
+          <span>+</span> Vincular póliza
+        </button>
+      </div>
+
       {empresa.polizas.length === 0 ? (
-        <div className="exp-empty">Sin pólizas vinculadas.</div>
+        <div className="exp-empty">
+          Sin pólizas vinculadas. Usa el botón para asignar una del catálogo.
+        </div>
       ) : (
         <div className="exp-table-wrap">
           <div className="exp-table">
             <div className="exp-table-header exp-table-header--polizas">
               <span>Póliza</span>
               <span>Tipo</span>
-              <span>Precio</span>
               <span>Vigencia</span>
               <span>Vencimiento</span>
               <span>Estatus</span>
@@ -260,9 +453,8 @@ export default function EmpresaExpediente({
               <div key={p.id} className="exp-table-row exp-table-row--polizas">
                 <span className="exp-col-bold">{p.nombre}</span>
                 <span className="exp-col-muted">{p.tipo}</span>
-                <span className="exp-col-price">{p.precio}</span>
-                <span className="exp-col-muted">{p.vigencia}</span>
-                <span className="exp-col-muted">{p.vencimiento}</span>
+                <span className="exp-col-muted">{p.vigencia || "—"}</span>
+                <span className="exp-col-muted">{p.vencimiento || "—"}</span>
                 <span>
                   <span
                     className={`status-pill ${p.activa ? "status-pill--active" : "status-pill--inactive"}`}
@@ -279,6 +471,14 @@ export default function EmpresaExpediente({
             ))}
           </div>
         </div>
+      )}
+
+      {vincularModal && (
+        <VincularPolizaModal
+          catalogoPolizas={catalogoPolizas}
+          onClose={() => setVincularModal(false)}
+          onSave={handleVincularPoliza}
+        />
       )}
     </div>
   );

@@ -226,6 +226,32 @@ export function useEmpresas(filtros = {}) {
     );
   };
 
+  const vincularPoliza = async (empresaId, datos) => {
+    try {
+      const raw = await empresasService.vincularPoliza(empresaId, datos);
+
+      const vinculada = {
+        id: raw.id,
+        nombre: raw.poliza_nombre ?? raw.nombre ?? "",
+        tipo: raw.tipo ?? "",
+        precio: raw.precio
+          ? `$${Number(raw.precio).toLocaleString("es-MX")} MXN/mes`
+          : "",
+        vigencia: raw.vigencia ?? "",
+        vencimiento: raw.vencimiento ?? "",
+        activa: Boolean(raw.activa ?? 1),
+      };
+      return vinculada;
+    } catch (err) {
+      Swal.fire(
+        "Error",
+        err.message ?? "No se pudo vincular la póliza.",
+        "error",
+      );
+      return null;
+    }
+  };
+
   return {
     empresas,
     loading,
@@ -236,5 +262,6 @@ export function useEmpresas(filtros = {}) {
     cargarExpediente,
     crearUsuario,
     actualizarLocal,
+    vincularPoliza,
   };
 }
