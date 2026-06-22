@@ -1,219 +1,88 @@
 /* VISTAL GENERAL DE CALENDARIO */
-import React, { useState } from "react";
 import FullCalendar from "@fullcalendar/react";
+import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
+import resourceTimeGridPlugin from "@fullcalendar/resource-timegrid";
 import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
+import Swal from "sweetalert2";
+import { useCalendario } from "../services/useCalendario.js";
 import "../css/CalendarView.css";
 
-const EVENTS = [
-  {
-    id: "1",
-    title: "Mantenimiento Impresoras",
-    start: "2026-05-26T12:00:00",
-    end: "2026-05-26T13:00:00",
-    extendedProps: {
-      agente: "Ing Jose",
-      prioridad: "Alta",
-      detalles: "Detalles del mantenimiento",
-    },
-    backgroundColor: "#16005e",
-    overlap: false,
-  },
-  {
-    id: "2",
-    title: "Instalación de impresoras",
-    start: "2026-05-26T13:00:00",
-    end: "2026-05-26T14:00:00",
-    extendedProps: {
-      agente: "Jane Smith",
-      prioridad: "Media",
-      detalles: "Detalles de la instalación",
-    },
-    backgroundColor: "#5e0056",
-    overlap: false,
-  },
-  {
-    id: "3",
-    title: "Client test",
-    start: "2026-05-26T16:00:00",
-    end: "2026-05-26T17:00:00",
-    extendedProps: {
-      agente: "John John",
-      prioridad: "Alta",
-      detalles: "Detalles del mantenimiento",
-    },
-    backgroundColor: "#005e24",
-    overlap: false,
-  },
-  {
-    id: "4",
-    title: "Reconexión de red",
-    start: "2026-05-30T10:00:00",
-    end: "2026-05-30T11:00:00",
-    extendedProps: {
-      agente: "Jane Jane",
-      prioridad: "Media",
-      detalles: "Detalles de la reconexión",
-    },
-    backgroundColor: "#5e5e00",
-    overlap: false,
-  },
-];
-
 export default function CalendarView() {
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const { eventos, loading, error, reagendar, eliminar } = useCalendario();
+
+  const handleEventChange = async (changeInfo) => {
+    const { event } = changeInfo;
+    const ok = await reagendar(event.id, {
+      fecha_inicio: event.start.toISOString(),
+      fecha_fin: (event.end ?? event.start).toISOString(),
+    });
+    if (!ok) changeInfo.revert();
+  };
 
   const handleEventClick = (clickInfo) => {
-    const event = clickInfo.event;
+    const { extendedProps, title } = clickInfo.event;
+    const esIncidencia = extendedProps.tipo === "incidencia";
 
-    setSelectedEvent({
-      title: event.title,
-      start: event.start.toLocaleTimeString("es-MX", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      end: event.end
-        ? event.end.toLocaleTimeString("es-MX", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
-        : "",
-      date: event.start.toLocaleDateString("es-MX", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-      }),
-      color: event.backgroundColor,
-      agente: event.extendedProps.agente,
-      prioridad: event.extendedProps.prioridad,
-      detalles: event.extendedProps.detalles,
+    Swal.fire({
+      title: esIncidencia
+        ? `🟠 Incidencia — ${extendedProps.incidenciaTicket}`
+        : `🔵 Mantenimiento`,
+      html: `
+        <p style="text-align:left;font-size:.9rem;color:#374151;margin-bottom:8px">
+          <strong>${title}</strong>
+        </p>
+        <p style="text-align:left;font-size:.85rem;color:#6b7280">
+          Empresa: ${extendedProps.empresaNombre || "—"}<br/>
+          Técnico: ${extendedProps.tecnicoNombre || "Sin asignar"}<br/>
+          ${extendedProps.descripcion ? `Detalle: ${extendedProps.descripcion}` : ""}
+        </p>
+      `,
+      icon: esIncidencia ? "warning" : "info",
+      confirmButtonColor: "#3b82f6",
+      confirmButtonText: "Cerrar",
+      showDenyButton: true,
+      denyButtonText: "Eliminar evento",
+      denyButtonColor: "#ef4444",
+    }).then((r) => {
+      if (r.isDenied) eliminar(clickInfo.event.id);
     });
   };
 
-  const closeModal = () => {
-    setSelectedEvent(null);
-  };
-
   return (
-    <div className="cal-container">
-      <div className="cal-header">
-        <h1 className="cal-title">Calendario de Mantenimiento</h1>
-        <p className="cal-subtitle">
-          Consulta y gestiona las citas de servicio programadas
-        </p>
-      </div>
+    <div className="calendar-view-container">
+      {loading && (
+        <div className="calendar-loading">Cargando calendario...</div>
+      )}
+      {!loading && error && (
+        <div className="calendar-error">Error: {error}</div>
+      )}
 
-      <div className="cal-wrapper">
+      {!loading && !error && (
         <FullCalendar
           plugins={[
+            resourceTimelinePlugin,
             dayGridPlugin,
-            timeGridPlugin,
+            resourceTimeGridPlugin,
             listPlugin,
             interactionPlugin,
           ]}
-          initialView="listWeek"
-          sss
+          initialView="dayGridMonth"
           editable={true}
-          selectable={true}
-          nowIndicator={true}
-          height="auto"
-          locale="es"
-          firstDay={1}
-          slotMinTime="08:30:00"
-          slotMaxTime="18:00:00"
-          slotDuration="00:30:00"
-          /* esconder domingo */
-          hiddenDays={[0]}
-          /* lunes a viernes de 8:30 a 17:30 y sabados de 9:00 a 14:00 */
-          businessHours={[
-            {
-              daysOfWeek: [1, 2, 3, 4, 5],
-              startTime: "08:30:00",
-              endTime: "17:30:00",
-            },
-            {
-              daysOfWeek: [6],
-              startTime: "09:00:00",
-              endTime: "14:00:00",
-            },
-          ]}
-          eventConstraint={[
-            {
-              daysOfWeek: [1, 2, 3, 4, 5],
-              startTime: "08:30:00",
-              endTime: "17:30:00",
-            },
-            {
-              daysOfWeek: [6],
-              startTime: "09:00:00",
-              endTime: "14:00:00",
-            },
-          ]}
+          eventResizableFromStart={true}
           headerToolbar={{
             left: "prev,next today",
             center: "title",
-            right: "timeGridDay,timeGridWeek,dayGridMonth,listWeek",
+            right: "dayGridMonth,timeGridWeek,listWeek",
           }}
-          buttonText={{
-            today: "Hoy",
-            month: "Mes",
-            week: "Semana",
-            day: "Día",
-            list: "Lista",
-          }}
-          events={EVENTS}
-          eventTextColor="#fff"
-          eventBorderColor="transparent"
-          allDayText="Todo el día"
-          noEventsText="Sin citas programadas"
+          events={eventos}
+          eventChange={handleEventChange}
           eventClick={handleEventClick}
+          eventTextColor="#fff"
+          locale="es"
+          schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
         />
-      </div>
-
-      {selectedEvent && (
-        <div className="crm-modal-overlay" onClick={closeModal}>
-          <div
-            className="crm-modal-content"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="crm-modal-header"
-              style={{ borderLeft: `5px solid ${selectedEvent.color}` }}
-            >
-              <h3>{selectedEvent.title}</h3>
-              <button className="crm-modal-close" onClick={closeModal}>
-                &times;
-              </button>
-            </div>
-            <div className="crm-modal-body">
-              <p>
-                <strong>Fecha:</strong> {selectedEvent.date}
-              </p>
-              <p>
-                <strong>Horario:</strong> {selectedEvent.start} -{" "}
-                {selectedEvent.end}
-              </p>
-              <p>
-                <strong>Agente asignado:</strong> {selectedEvent.agente}
-              </p>
-              <p>
-                <strong>Prioridad:</strong>{" "}
-                <span
-                  className={`badge-${selectedEvent.prioridad.toLowerCase()}`}
-                >
-                  {selectedEvent.prioridad}
-                </span>
-              </p>
-              <hr />
-              <p>
-                <strong>Detalles de la póliza/incidente:</strong>
-              </p>
-              <p className="crm-modal-desc">{selectedEvent.detalles}</p>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
