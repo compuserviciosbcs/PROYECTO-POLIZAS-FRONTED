@@ -1,4 +1,5 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
+const TOKEN = import.meta.env.VITE_APP_BEARER_TOKEN;
 
 export const empresasService = {
   getAll: async (filtros = {}) => {
@@ -9,14 +10,22 @@ export const empresasService = {
     if (filtros.estatus && filtros.estatus !== "Todos")
       params.append("estatus", filtros.estatus);
 
-    const res = await fetch(`${API_BASE_URL}/empresas?${params}`);
+    const res = await fetch(`${API_BASE_URL}/empresas?${params}`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+    });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al obtener empresas");
     return json.data ?? json;
   },
 
   getById: async (id) => {
-    const res = await fetch(`${API_BASE_URL}/empresas/${id}`);
+    const res = await fetch(`${API_BASE_URL}/empresas/${id}`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+    });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al obtener empresa");
     return json.data ?? json;
@@ -25,7 +34,10 @@ export const empresasService = {
   create: async (datos) => {
     const res = await fetch(`${API_BASE_URL}/empresas`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -36,7 +48,10 @@ export const empresasService = {
   update: async (id, datos) => {
     const res = await fetch(`${API_BASE_URL}/empresas/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -46,6 +61,9 @@ export const empresasService = {
 
   delete: async (id) => {
     const res = await fetch(`${API_BASE_URL}/empresas/${id}`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
       method: "DELETE",
     });
     const json = await res.json();
@@ -57,7 +75,10 @@ export const empresasService = {
   crearUsuario: async (empresaId, datos) => {
     const res = await fetch(`${API_BASE_URL}/empresas/${empresaId}/usuarios`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -69,7 +90,10 @@ export const empresasService = {
   vincularPoliza: async (empresaId, datos) => {
     const res = await fetch(`${API_BASE_URL}/empresas/${empresaId}/polizas`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify(datos),
     });
     const json = await res.json();

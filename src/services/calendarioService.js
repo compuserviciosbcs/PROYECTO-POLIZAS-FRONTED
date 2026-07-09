@@ -1,5 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+const TOKEN = import.meta.env.VITE_APP_BEARER_TOKEN;
+
 export const calendarioService = {
   getAll: async (filtros = {}) => {
     const params = new URLSearchParams();
@@ -9,7 +11,11 @@ export const calendarioService = {
     if (filtros.desde) params.append("desde", filtros.desde);
     if (filtros.hasta) params.append("hasta", filtros.hasta);
 
-    const res = await fetch(`${API_BASE_URL}/calendario?${params}`);
+    const res = await fetch(`${API_BASE_URL}/calendario?${params}`, {
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
+    });
     const json = await res.json();
     if (!res.ok)
       throw new Error(json.message ?? "Error al obtener el calendario");
@@ -19,7 +25,10 @@ export const calendarioService = {
   create: async (datos) => {
     const res = await fetch(`${API_BASE_URL}/calendario`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -30,7 +39,10 @@ export const calendarioService = {
   update: async (id, datos) => {
     const res = await fetch(`${API_BASE_URL}/calendario/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${TOKEN}`,
+      },
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -42,6 +54,9 @@ export const calendarioService = {
   delete: async (id) => {
     const res = await fetch(`${API_BASE_URL}/calendario/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${TOKEN}`,
+      },
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al eliminar el evento");
