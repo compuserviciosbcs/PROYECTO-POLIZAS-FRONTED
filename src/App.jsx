@@ -1,5 +1,4 @@
 /* ENRUTADOR PRINCIPAL DEL CRM */
-import { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -15,12 +14,10 @@ import GestionIncidencias from "./components/GestionIncidencias.jsx";
 import HistorialIncidencias from "./components/HistorialIncidencias.jsx";
 import { useServicios } from "./services/useServicios.js";
 import { usePolicies } from "./services/usePolicies.js";
-import { initialIncidencias } from "./data/incidencias.js";
+import { useIncidencias } from "./services/useIncidencias.js";
 import "./App.css";
 
 export default function App() {
-  const [incidencias, setIncidencias] = useState(initialIncidencias);
-
   const {
     servicios,
     crear: crearServicio,
@@ -64,25 +61,8 @@ export default function App() {
               element={<CatalogoPolicies catalogoServicios={servicios} />}
             />
 
-            <Route
-              path="/incidencias"
-              element={
-                <GestionIncidencias
-                  incidencias={incidencias}
-                  onUpdate={setIncidencias}
-                />
-              }
-            />
-
-            <Route
-              path="/historial"
-              element={
-                <HistorialIncidencias
-                  incidencias={incidencias}
-                  onUpdate={setIncidencias}
-                />
-              }
-            />
+            <Route path="/incidencias" element={<GestionIncidencias />} />
+            <Route path="/historial" element={<HistorialIncidencias />} />
 
             <Route
               path="*"

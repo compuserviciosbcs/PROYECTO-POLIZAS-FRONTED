@@ -1,64 +1,82 @@
 import { useState } from "react";
+import Swal from "sweetalert2";
+import { useIncidencias } from "../services/useIncidencias.js";
 import "../css/GestionIncidencias.css";
 
 const ESTATUS_OPCIONES = ["Todos", "Abierto", "En Proceso"];
 
-export default function GestionIncidencias({
-  incidencias = [],
-  onUpdateIncidencias,
-}) {
+export default function GestionIncidencias() {
   const [filterEstatus, setFilterEstatus] = useState("Todos");
   const [search, setSearch] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [solucionText, setSolucionText] = useState("");
+  const [slaRespuesta, setSlaRespuesta] = useState("");
+  const [slaSolucion, setSlaSolucion] = useState("");
+  const [jsonVisible, setJsonVisible] = useState(false);
+  const [botPayload, setBotPayload] = useState(null);
+
+  const {
+    incidencias,
+    loading,
+    error,
+    cerrar,
+    cambiarEstatus,
+    eliminar,
+    actualizarLocal,
+  } = useIncidencias({ estatus: filterEstatus, search });
 
   const filteredTickets = incidencias.filter((t) => {
-    const matchEstatus =
-      filterEstatus === "Todos"
-        ? t.estatus !== "Solucionado"
-        : t.estatus === filterEstatus;
-    const q = search.toLowerCase();
-    return (
-      matchEstatus &&
-      (!q ||
-        t.ticket.toLowerCase().includes(q) ||
-        t.empresaNombre.toLowerCase().includes(q) ||
-        t.asunto.toLowerCase().includes(q))
-    );
+    if (filterEstatus === "Todos") {
+      return t.estatus !== "Solucionado" && t.estatus !== "No Solucionado";
+    }
+    return t.estatus === filterEstatus;
   });
 
-  const handleCerrarTicket = (ticketId) => {
+  const handleCerrarTicket = async () => {
     if (!solucionText.trim()) return;
 
-    const ticketOriginal = incidencias.find((t) => t.ticket === ticketId);
-    const botPayload = {
-      event: "INCIDENCIA_RESUELTA",
-      timestamp: new Date().toISOString(),
-      payload: {
-        ticket: ticketId,
-        empresa: ticketOriginal?.empresaNombre,
-        solucion: solucionText.trim(),
-        metricas: { sla_respuesta: "0.5 hrs", sla_solucion: "3.8 hrs" },
-      },
-    };
-    console.log("Payload JSON para el Bot:", botPayload);
+    const resultado = await cerrar(selectedTicket.id, {
+      solucionAplicada: solucionText.trim(),
+      slaRespuestaHoras: slaRespuesta || null,
+      slaSolucionHoras: slaSolucion || null,
+    });
 
-    if (onUpdateIncidencias) {
-      onUpdateIncidencias(
-        incidencias.map((t) =>
-          t.ticket === ticketId
-            ? {
-                ...t,
-                estatus: "Solucionado",
-                cierre: { solucionAplicada: solucionText.trim() },
-              }
-            : t,
-        ),
-      );
-    }
+    if (!resultado) return;
+
+    setBotPayload(resultado.botPayload);
+    setJsonVisible(true);
     setSelectedTicket(null);
     setSolucionText("");
+    setSlaRespuesta("");
+    setSlaSolucion("");
+
+    Swal.fire({
+      title: "Ticket cerrado",
+      text: `${resultado.incidencia.ticket} — solución registrada correctamente.`,
+      icon: "success",
+      confirmButtonColor: "#3b82f6",
+      timer: 2000,
+      timerProgressBar: true,
+    });
   };
+
+  const handleCopiarJson = () => {
+    navigator.clipboard.writeText(JSON.stringify(botPayload, null, 2));
+    Swal.fire({
+      title: "Copiado",
+      icon: "success",
+      timer: 1200,
+      showConfirmButton: false,
+    });
+  };
+
+  if (loading) return <div className="inc-empty">Cargando incidencias...</div>;
+  if (error)
+    return (
+      <div className="inc-empty" style={{ color: "#ef4444" }}>
+        Error: {error}
+      </div>
+    );
 
   return (
     <div className="inc-container">
@@ -69,7 +87,7 @@ export default function GestionIncidencias({
         </p>
       </div>
 
-      {/* Toolbar / Filtros */}
+      {/* Toolbar */}
       <div className="inc-toolbar">
         <div className="inc-tabs">
           {ESTATUS_OPCIONES.map((e) => (
@@ -90,6 +108,7 @@ export default function GestionIncidencias({
         />
       </div>
 
+      {/* Grid de tarjetas */}
       <div className="inc-grid">
         {filteredTickets.length === 0 ? (
           <div className="inc-empty">
@@ -118,7 +137,7 @@ export default function GestionIncidencias({
                 <p className="inc-card-asunto">{ticket.asunto}</p>
                 <div className="inc-card-meta">
                   <span>
-                    Afectado: <strong>{ticket.usuarioAfectado}</strong>
+                    Afectado: <strong>{ticket.usuarioAfectado || "—"}</strong>
                   </span>
                   <span>
                     Técnico:{" "}
@@ -130,11 +149,12 @@ export default function GestionIncidencias({
               <div className="inc-card-footer">
                 <button
                   className="inc-btn-manage"
-                  onClick={() => setSelectedTicket(ticket)}
+                  onClick={() => {
+                    setSelectedTicket(ticket);
+                    setSolucionText("");
+                  }}
                 >
-                  {ticket.estatus === "Solucionado"
-                    ? "Ver Resumen"
-                    : "Gestionar Cierre"}
+                  Gestionar Cierre
                 </button>
               </div>
             </div>
@@ -142,6 +162,7 @@ export default function GestionIncidencias({
         )}
       </div>
 
+      {/* Modal de gestión */}
       {selectedTicket && (
         <div className="inc-overlay" onClick={() => setSelectedTicket(null)}>
           <div className="inc-modal" onClick={(e) => e.stopPropagation()}>
@@ -171,27 +192,46 @@ export default function GestionIncidencias({
                 <p className="inc-modal-text">{selectedTicket.descripcion}</p>
               </div>
 
-              {selectedTicket.estatus !== "Solucionado" ? (
-                <div className="inc-modal-section">
-                  <label className="inc-modal-label">
-                    Resolución técnica (Obligatorio)
-                  </label>
-                  <textarea
-                    className="inc-modal-textarea"
-                    placeholder="Describe los pasos aplicados para solucionar la falla..."
-                    rows={4}
-                    value={solucionText}
-                    onChange={(e) => setSolucionText(e.target.value)}
+              <div className="inc-modal-section">
+                <label className="inc-modal-label">
+                  Resolución técnica <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <textarea
+                  className="inc-modal-textarea"
+                  placeholder="Describe los pasos aplicados para solucionar la falla..."
+                  rows={4}
+                  value={solucionText}
+                  onChange={(e) => setSolucionText(e.target.value)}
+                />
+              </div>
+
+              {/* SLA — opcionales pero recomendados */}
+              <div className="inc-modal-sla-row">
+                <div className="inc-modal-section" style={{ flex: 1 }}>
+                  <label className="inc-modal-label">SLA Respuesta (hrs)</label>
+                  <input
+                    className="inc-modal-input"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="Ej. 0.5"
+                    value={slaRespuesta}
+                    onChange={(e) => setSlaRespuesta(e.target.value)}
                   />
                 </div>
-              ) : (
-                <div className="inc-modal-section">
-                  <label className="inc-modal-label">Solución aplicada</label>
-                  <div className="inc-solucion-box">
-                    {selectedTicket.cierre?.solucionAplicada}
-                  </div>
+                <div className="inc-modal-section" style={{ flex: 1 }}>
+                  <label className="inc-modal-label">SLA Solución (hrs)</label>
+                  <input
+                    className="inc-modal-input"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="Ej. 3.5"
+                    value={slaSolucion}
+                    onChange={(e) => setSlaSolucion(e.target.value)}
+                  />
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="inc-modal-footer">
@@ -201,15 +241,13 @@ export default function GestionIncidencias({
               >
                 Volver
               </button>
-              {selectedTicket.estatus !== "Solucionado" && (
-                <button
-                  className="inc-btn-submit"
-                  disabled={!solucionText.trim()}
-                  onClick={() => handleCerrarTicket(selectedTicket.ticket)}
-                >
-                  Emitir Ticket y Cerrar
-                </button>
-              )}
+              <button
+                className="inc-btn-submit"
+                disabled={!solucionText.trim()}
+                onClick={handleCerrarTicket}
+              >
+                Emitir Ticket y Cerrar
+              </button>
             </div>
           </div>
         </div>

@@ -1,39 +1,25 @@
-/* MODULO IV: HISTORIAL DE INCIDENCIAS - MAQUETADO LIMPIO */
 import { useState } from "react";
-import { initialIncidencias } from "../data/incidencias.js";
+import { useHistorial } from "../services/useIncidencias.js";
 import "../css/HistorialIncidencias.css";
 
-export default function HistorialIncidencias({
-  incidencias = initialIncidencias,
-  onVerIncidencia,
-}) {
+export default function HistorialIncidencias() {
   const [search, setSearch] = useState("");
   const [filterModalidad, setFilterModalidad] = useState("Todos");
   const [selectedTicket, setSelectedTicket] = useState(null);
 
-  const historicoSolucionados = incidencias.filter(
-    (t) => t.estatus === "Solucionado",
-  );
-
-  const filteredHistorico = historicoSolucionados.filter((t) => {
-    const matchModalidad =
-      filterModalidad === "Todos" || t.clasificacion === filterModalidad;
-    const q = search.toLowerCase();
-    return (
-      matchModalidad &&
-      (!q ||
-        t.ticket.toLowerCase().includes(q) ||
-        t.empresaNombre.toLowerCase().includes(q) ||
-        t.asunto.toLowerCase().includes(q) ||
-        t.tecnicoAsignado.toLowerCase().includes(q))
-    );
+  const { historial, loading, error } = useHistorial({
+    search,
+    clasificacion: filterModalidad,
   });
 
-  const handleRowClick = (ticket) => {
-    setSelectedTicket(ticket);
-
-    if (onVerIncidencia) onVerIncidencia(ticket);
-  };
+  if (loading)
+    return <div className="hi-table-empty">Cargando historial...</div>;
+  if (error)
+    return (
+      <div className="hi-table-empty" style={{ color: "#ef4444" }}>
+        Error: {error}
+      </div>
+    );
 
   return (
     <div className="hi-container">
@@ -64,7 +50,7 @@ export default function HistorialIncidencias({
           </select>
         </div>
         <div className="hi-counter-badge">
-          Total Clausurados: <strong>{filteredHistorico.length}</strong>
+          Total clausurados: <strong>{historial.length}</strong>
         </div>
       </div>
 
@@ -76,13 +62,13 @@ export default function HistorialIncidencias({
               <th>Empresa</th>
               <th>Asunto</th>
               <th>Modalidad</th>
-              <th>Fecha Cierre</th>
+              <th>Fecha cierre</th>
               <th>Técnico</th>
               <th className="hi-text-right">SLA Solución</th>
             </tr>
           </thead>
           <tbody>
-            {filteredHistorico.length === 0 ? (
+            {historial.length === 0 ? (
               <tr>
                 <td colSpan="7" className="hi-table-empty">
                   No se encontraron folios resueltos en el historial de
@@ -90,11 +76,11 @@ export default function HistorialIncidencias({
                 </td>
               </tr>
             ) : (
-              filteredHistorico.map((ticket) => (
+              historial.map((ticket) => (
                 <tr
                   key={ticket.ticket}
                   className="hi-table-row-clickable"
-                  onClick={() => handleRowClick(ticket)}
+                  onClick={() => setSelectedTicket(ticket)}
                 >
                   <td className="hi-td-ticket">{ticket.ticket}</td>
                   <td className="hi-td-empresa">{ticket.empresaNombre}</td>
@@ -108,19 +94,28 @@ export default function HistorialIncidencias({
                     <span
                       className={`hi-badge-type hi-badge-type--${ticket.clasificacion.toLowerCase()}`}
                     >
-                      {ticket.clasificacion === "Remota"
-                        ? "Remoto"
-                        : "Presencial"}
+                      {ticket.clasificacion}
                     </span>
                   </td>
-                  <td className="hi-td-date">{ticket.fechaCreacion}</td>
+                  <td className="hi-td-date">
+                    {ticket.fechaCierre
+                      ? new Date(ticket.fechaCierre).toLocaleDateString(
+                          "es-MX",
+                          {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )
+                      : "—"}
+                  </td>
                   <td className="hi-td-tech">
                     {ticket.tecnicoAsignado || "—"}
                   </td>
                   <td className="hi-text-right hi-td-sla">
                     {ticket.cierre?.slaSolucionHoras
                       ? `${ticket.cierre.slaSolucionHoras} hrs`
-                      : "0.5 hrs"}
+                      : "—"}
                   </td>
                 </tr>
               ))
@@ -129,6 +124,7 @@ export default function HistorialIncidencias({
         </table>
       </div>
 
+      {/* Modal de detalle */}
       {selectedTicket && (
         <div className="hi-overlay" onClick={() => setSelectedTicket(null)}>
           <div className="hi-modal" onClick={(e) => e.stopPropagation()}>
@@ -136,7 +132,7 @@ export default function HistorialIncidencias({
               <div>
                 <p className="hi-modal-meta">
                   {selectedTicket.ticket} •{" "}
-                  {selectedTicket.polizaAsociada || "Póliza No Especificada"}
+                  {selectedTicket.polizaAsociada || "Póliza no especificada"}
                 </p>
                 <h3 className="hi-modal-title">
                   {selectedTicket.empresaNombre}
@@ -152,13 +148,13 @@ export default function HistorialIncidencias({
 
             <div className="hi-modal-body">
               <div className="hi-modal-section">
-                <label className="hi-modal-label">Problema Reportado</label>
+                <label className="hi-modal-label">Problema reportado</label>
                 <p className="hi-modal-text">{selectedTicket.descripcion}</p>
               </div>
 
               <div className="hi-modal-section">
                 <label className="hi-modal-label">
-                  Solución Técnica Aplicada
+                  Solución técnica aplicada
                 </label>
                 <div className="hi-solucion-box">
                   {selectedTicket.cierre?.solucionAplicada ||
@@ -168,23 +164,49 @@ export default function HistorialIncidencias({
 
               <div className="hi-modal-section">
                 <label className="hi-modal-label">
-                  Métricas e Impacto de Rendimiento
+                  Métricas de rendimiento
                 </label>
                 <div className="hi-kpi-grid">
                   <div className="hi-kpi-card">
                     <span className="hi-kpi-lbl">SLA Respuesta</span>
                     <span className="hi-kpi-val">
-                      {selectedTicket.cierre?.slaRespuestaHoras || "0.5"} hrs
+                      {selectedTicket.cierre?.slaRespuestaHoras
+                        ? `${selectedTicket.cierre.slaRespuestaHoras} hrs`
+                        : "—"}
                     </span>
                   </div>
                   <div className="hi-kpi-card">
-                    <span className="hi-kpi-val--blue">SLA Solución</span>
-                    <span className="hi-kpi-val">
-                      {selectedTicket.cierre?.slaSolucionHoras || "3.8"} hrs
+                    <span className="hi-kpi-lbl">SLA Solución</span>
+                    <span className="hi-kpi-val hi-kpi-val--blue">
+                      {selectedTicket.cierre?.slaSolucionHoras
+                        ? `${selectedTicket.cierre.slaSolucionHoras} hrs`
+                        : "—"}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* Datos de cita si fue presencial */}
+              {selectedTicket.clasificacion === "Presencial" &&
+                selectedTicket.cita && (
+                  <div className="hi-modal-section">
+                    <label className="hi-modal-label">
+                      Datos de la visita presencial
+                    </label>
+                    <div
+                      className="hi-solucion-box"
+                      style={{ fontSize: ".85rem" }}
+                    >
+                      📅 {selectedTicket.cita.fecha_cita} a las{" "}
+                      {selectedTicket.cita.hora_cita}
+                      <br />
+                      📍 {selectedTicket.cita.direccion || "—"}
+                      <br />
+                      👤 {selectedTicket.cita.contacto || "—"} ·{" "}
+                      {selectedTicket.cita.telefono || "—"}
+                    </div>
+                  </div>
+                )}
             </div>
 
             <div className="hi-modal-footer">
@@ -192,7 +214,7 @@ export default function HistorialIncidencias({
                 className="hi-btn-close"
                 onClick={() => setSelectedTicket(null)}
               >
-                Cerrar Detalle
+                Cerrar detalle
               </button>
             </div>
           </div>
