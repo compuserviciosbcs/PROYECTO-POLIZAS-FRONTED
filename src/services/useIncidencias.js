@@ -73,8 +73,6 @@ export function useIncidencias(filtros = {}) {
 
       const data = await incidenciasService.getAll(filtrosBD);
 
-      console.log("👉 DATOS CRUDOS DEL BACKEND:", data);
-
       setIncidencias(data.map(mapIncidencia));
     } catch (err) {
       console.error("useIncidencias:", err);
