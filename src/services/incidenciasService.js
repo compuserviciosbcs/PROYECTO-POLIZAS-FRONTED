@@ -48,14 +48,16 @@ export const incidenciasService = {
     return json.data ?? json;
   },
 
-  cambiarEstatus: async (id, estatus) => {
+  cambiarEstatus: async (id, datos) => {
+    const payload = typeof datos === "string" ? { estatus: datos } : datos;
+
     const res = await fetch(`${API_BASE_URL}/incidencias/${id}/estatus`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${TOKEN}`,
       },
-      body: JSON.stringify({ estatus }),
+      body: JSON.stringify(payload),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al cambiar estatus");

@@ -154,22 +154,28 @@ export function useIncidencias(filtros = {}) {
     }
   };
 
-  const cambiarEstatus = async (id, estatusUI) => {
+  const cambiarEstatus = async (id, datos) => {
     try {
-      const estatusBD = ESTATUS_UI_A_BD[estatusUI] ?? estatusUI;
-      const actualizada = await incidenciasService.cambiarEstatus(
-        id,
-        estatusBD,
-      );
+      const payload =
+        typeof datos === "string"
+          ? { estatus: ESTATUS_UI_A_BD[datos] ?? datos }
+          : {
+              ...datos,
+              estatus: ESTATUS_UI_A_BD[datos.estatus] ?? datos.estatus,
+            };
+
+      const actualizada = await incidenciasService.cambiarEstatus(id, payload);
       setIncidencias((prev) =>
         prev.map((i) => (i.id === id ? mapIncidencia(actualizada) : i)),
       );
+      return mapIncidencia(actualizada);
     } catch (err) {
       Swal.fire(
         "Error",
         err.message ?? "No se pudo actualizar el estatus.",
         "error",
       );
+      return null;
     }
   };
 

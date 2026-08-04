@@ -7,6 +7,8 @@
   --crm-border-light: #f1f5f9;
   --crm-primary: #2563eb;
   --crm-primary-dark: #1d4ed8;
+  --crm-success: #16a34a;
+  --crm-success-dark: #15803d;
   --crm-danger: #bc2424;
   --crm-danger-light: #fef2f2;
 }
@@ -237,21 +239,20 @@
 }
 
 .inc-btn-manage {
-  background: #fff;
-  border: 1px solid var(--crm-border-color);
+  border: none;
   border-radius: 6px;
-  padding: 6px 14px;
+  padding: 8px 14px;
   font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--crm-text-secondary);
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: all 0.15s ease;
+  width: 100%;
+  text-align: center;
 }
 
 .inc-btn-manage:hover {
-  background: var(--crm-border-light);
-  color: var(--crm-text-main);
-  border-color: var(--crm-text-muted);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .inc-overlay {
@@ -270,12 +271,14 @@
   background: #fff;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 520px;
   box-shadow:
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .inc-modal-header {
@@ -336,7 +339,6 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 10px;
 }
 
 .inc-modal-label {
@@ -356,23 +358,35 @@
   margin: 0;
 }
 
+.inc-modal-input,
 .inc-modal-textarea {
-  border: 2px solid var(--crm-border-color);
+  border: 1px solid var(--crm-border-color);
   border-radius: 6px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   font-size: 0.875rem;
   color: var(--crm-text-main);
   outline: none;
-  resize: vertical;
   background: #fff;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
+  width: 100%;
 }
 
+.inc-modal-textarea {
+  resize: vertical;
+}
+
+.inc-modal-input:focus,
 .inc-modal-textarea:focus {
   border-color: var(--crm-primary);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.inc-modal-sla-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
 .inc-solucion-box {
@@ -394,6 +408,7 @@
   background: #f8fafc;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
+  margin-top: auto;
 }
 
 .inc-btn-cancel {
@@ -413,7 +428,6 @@
 }
 
 .inc-btn-submit {
-  background: var(--crm-primary);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -421,11 +435,11 @@
   font-weight: 600;
   color: #fff;
   cursor: pointer;
-  transition: background 0.12s;
+  transition: opacity 0.12s;
 }
 
 .inc-btn-submit:hover:not(:disabled) {
-  background: var(--crm-primary-dark);
+  opacity: 0.9;
 }
 
 .inc-btn-submit:disabled {
@@ -464,5 +478,9 @@
   .inc-btn-submit {
     flex: 1;
     text-align: center;
+  }
+  .inc-modal-sla-row {
+    flex-direction: column;
+    gap: 8px;
   }
 }

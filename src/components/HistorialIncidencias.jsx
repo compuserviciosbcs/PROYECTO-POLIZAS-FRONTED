@@ -12,8 +12,6 @@ export default function HistorialIncidencias() {
     clasificacion: filterModalidad,
   });
 
-  if (loading)
-    return <div className="hi-table-empty">Cargando historial...</div>;
   if (error)
     return (
       <div className="hi-table-empty" style={{ color: "#ef4444" }}>
@@ -68,7 +66,13 @@ export default function HistorialIncidencias() {
             </tr>
           </thead>
           <tbody>
-            {historial.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="7" className="hi-table-empty">
+                  Cargando historial...
+                </td>
+              </tr>
+            ) : historial.length === 0 ? (
               <tr>
                 <td colSpan="7" className="hi-table-empty">
                   No se encontraron folios resueltos en el historial de

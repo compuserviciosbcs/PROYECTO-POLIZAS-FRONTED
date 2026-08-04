@@ -9,21 +9,19 @@ export default function GestionIncidencias() {
   const [filterEstatus, setFilterEstatus] = useState("Todos");
   const [search, setSearch] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [modoModal, setModoModal] = useState("");
+  const [tecnicoId, setTecnicoId] = useState("");
+  const [fechaCita, setFechaCita] = useState("");
+  const [horaCita, setHoraCita] = useState("");
+  const [direccionCita, setDireccionCita] = useState("");
   const [solucionText, setSolucionText] = useState("");
   const [slaRespuesta, setSlaRespuesta] = useState("");
   const [slaSolucion, setSlaSolucion] = useState("");
   const [jsonVisible, setJsonVisible] = useState(false);
   const [botPayload, setBotPayload] = useState(null);
 
-  const {
-    incidencias,
-    loading,
-    error,
-    cerrar,
-    cambiarEstatus,
-    eliminar,
-    actualizarLocal,
-  } = useIncidencias({ estatus: filterEstatus, search });
+  const { incidencias, loading, error, cerrar, cambiarEstatus } =
+    useIncidencias({ estatus: filterEstatus, search });
 
   const filteredTickets = incidencias.filter((t) => {
     if (filterEstatus === "Todos") {
@@ -31,6 +29,58 @@ export default function GestionIncidencias() {
     }
     return t.estatus === filterEstatus;
   });
+
+  const handleAbrirDespacho = (ticket) => {
+    setSelectedTicket(ticket);
+    setModoModal("despachar");
+    setTecnicoId(ticket.tecnico_id || "");
+    if (ticket.cita) {
+      setFechaCita(ticket.cita.fecha_cita || "");
+      setHoraCita(ticket.cita.hora_cita || "");
+      setDireccionCita(ticket.cita.direccion || "");
+    } else {
+      setFechaCita("");
+      setHoraCita("");
+      setDireccionCita("");
+    }
+  };
+
+  const handleAbrirCierre = (ticket) => {
+    setSelectedTicket(ticket);
+    setModoModal("cerrar");
+    setSolucionText("");
+    setSlaRespuesta(ticket.slaRespuesta || "");
+    setSlaSolucion(ticket.slaSolucion || "");
+  };
+
+  const handleGuardarDespacho = async () => {
+    const payload = {
+      estatus: "En Proceso",
+      tecnico_id: tecnicoId || null,
+    };
+
+    if (selectedTicket.clasificacion === "Presencial") {
+      payload.cita = {
+        fecha_cita: fechaCita,
+        hora_cita: horaCita,
+        direccion: direccionCita,
+      };
+    }
+
+    const exito = await cambiarEstatus(selectedTicket.id, payload);
+
+    if (exito) {
+      setSelectedTicket(null);
+      Swal.fire({
+        title: "Ticket en proceso",
+        text: `${selectedTicket.ticket} — Asignado y agendado correctamente.`,
+        icon: "info",
+        confirmButtonColor: "#3b82f6",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+    }
+  };
 
   const handleCerrarTicket = async () => {
     if (!solucionText.trim()) return;
@@ -46,13 +96,10 @@ export default function GestionIncidencias() {
     setBotPayload(resultado.botPayload);
     setJsonVisible(true);
     setSelectedTicket(null);
-    setSolucionText("");
-    setSlaRespuesta("");
-    setSlaSolucion("");
 
     Swal.fire({
       title: "Ticket cerrado",
-      text: `${resultado.incidencia.ticket} — solución registrada correctamente.`,
+      text: `${resultado.incidencia.ticket} — Solución registrada correctamente.`,
       icon: "success",
       confirmButtonColor: "#3b82f6",
       timer: 2000,
@@ -60,17 +107,6 @@ export default function GestionIncidencias() {
     });
   };
 
-  const handleCopiarJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(botPayload, null, 2));
-    Swal.fire({
-      title: "Copiado",
-      icon: "success",
-      timer: 1200,
-      showConfirmButton: false,
-    });
-  };
-
-  if (loading) return <div className="inc-empty">Cargando incidencias...</div>;
   if (error)
     return (
       <div className="inc-empty" style={{ color: "#ef4444" }}>
@@ -110,7 +146,9 @@ export default function GestionIncidencias() {
 
       {/* Grid de tarjetas */}
       <div className="inc-grid">
-        {filteredTickets.length === 0 ? (
+        {loading ? (
+          <div className="inc-empty">Cargando incidencias...</div>
+        ) : filteredTickets.length === 0 ? (
           <div className="inc-empty">
             No hay solicitudes en este estatus operativo.
           </div>
@@ -146,16 +184,29 @@ export default function GestionIncidencias() {
                 </div>
               </div>
 
-              <div className="inc-card-footer">
-                <button
-                  className="inc-btn-manage"
-                  onClick={() => {
-                    setSelectedTicket(ticket);
-                    setSolucionText("");
-                  }}
-                >
-                  Gestionar Cierre
-                </button>
+              <div
+                className="inc-card-footer"
+                style={{ gap: "8px", display: "flex" }}
+              >
+                {ticket.estatus === "Abierto" && (
+                  <button
+                    className="inc-btn-manage"
+                    style={{ background: "#2563eb", color: "#fff" }}
+                    onClick={() => handleAbrirDespacho(ticket)}
+                  >
+                    Asignar y Programar
+                  </button>
+                )}
+
+                {ticket.estatus === "En Proceso" && (
+                  <button
+                    className="inc-btn-manage"
+                    style={{ background: "#16a34a", color: "#fff" }}
+                    onClick={() => handleAbrirCierre(ticket)}
+                  >
+                    Registrar Solución y Cerrar
+                  </button>
+                )}
               </div>
             </div>
           ))
@@ -163,6 +214,7 @@ export default function GestionIncidencias() {
       </div>
 
       {/* Modal de gestión */}
+
       {selectedTicket && (
         <div className="inc-overlay" onClick={() => setSelectedTicket(null)}>
           <div className="inc-modal" onClick={(e) => e.stopPropagation()}>
@@ -192,46 +244,121 @@ export default function GestionIncidencias() {
                 <p className="inc-modal-text">{selectedTicket.descripcion}</p>
               </div>
 
-              <div className="inc-modal-section">
-                <label className="inc-modal-label">
-                  Resolución técnica <span style={{ color: "#ef4444" }}>*</span>
-                </label>
-                <textarea
-                  className="inc-modal-textarea"
-                  placeholder="Describe los pasos aplicados para solucionar la falla..."
-                  rows={4}
-                  value={solucionText}
-                  onChange={(e) => setSolucionText(e.target.value)}
-                />
-              </div>
+              {modoModal === "despachar" && (
+                <>
+                  <div className="inc-modal-section">
+                    <label className="inc-modal-label">
+                      Técnico Responsable
+                    </label>
+                    <input
+                      className="inc-modal-input"
+                      placeholder="Nombre o ID del técnico asignado..."
+                      value={tecnicoId}
+                      onChange={(e) => setTecnicoId(e.target.value)}
+                    />
+                  </div>
 
-              {/* SLA — opcionales pero recomendados */}
-              <div className="inc-modal-sla-row">
-                <div className="inc-modal-section" style={{ flex: 1 }}>
-                  <label className="inc-modal-label">SLA Respuesta (hrs)</label>
-                  <input
-                    className="inc-modal-input"
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    placeholder="Ej. 0.5"
-                    value={slaRespuesta}
-                    onChange={(e) => setSlaRespuesta(e.target.value)}
-                  />
-                </div>
-                <div className="inc-modal-section" style={{ flex: 1 }}>
-                  <label className="inc-modal-label">SLA Solución (hrs)</label>
-                  <input
-                    className="inc-modal-input"
-                    type="number"
-                    min="0"
-                    step="0.5"
-                    placeholder="Ej. 3.5"
-                    value={slaSolucion}
-                    onChange={(e) => setSlaSolucion(e.target.value)}
-                  />
-                </div>
-              </div>
+                  {selectedTicket.clasificacion === "Presencial" && (
+                    <div
+                      className="inc-modal-section"
+                      style={{
+                        background: "#f0f9ff",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        border: "1px solid #bae6fd",
+                      }}
+                    >
+                      <label
+                        className="inc-modal-label"
+                        style={{ color: "#0284c7", fontWeight: "bold" }}
+                      >
+                        Cita para Atención Presencial
+                      </label>
+                      <div
+                        className="inc-modal-sla-row"
+                        style={{ marginTop: "8px" }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <label className="inc-modal-label">Fecha</label>
+                          <input
+                            className="inc-modal-input"
+                            type="date"
+                            value={fechaCita}
+                            onChange={(e) => setFechaCita(e.target.value)}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label className="inc-modal-label">Hora</label>
+                          <input
+                            className="inc-modal-input"
+                            type="time"
+                            value={horaCita}
+                            onChange={(e) => setHoraCita(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div style={{ marginTop: "8px" }}>
+                        <label className="inc-modal-label">Dirección</label>
+                        <input
+                          className="inc-modal-input"
+                          placeholder="Sucursal o domicilio..."
+                          value={direccionCita}
+                          onChange={(e) => setDireccionCita(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {modoModal === "cerrar" && (
+                <>
+                  <div className="inc-modal-section">
+                    <label className="inc-modal-label">
+                      Resolución técnica{" "}
+                      <span style={{ color: "#ef4444" }}>*</span>
+                    </label>
+                    <textarea
+                      className="inc-modal-textarea"
+                      placeholder="Describe los pasos aplicados para solucionar la falla..."
+                      rows={4}
+                      value={solucionText}
+                      onChange={(e) => setSolucionText(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="inc-modal-sla-row">
+                    <div className="inc-modal-section" style={{ flex: 1 }}>
+                      <label className="inc-modal-label">
+                        SLA Respuesta (hrs)
+                      </label>
+                      <input
+                        className="inc-modal-input"
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        placeholder="Ej. 0.5"
+                        value={slaRespuesta}
+                        onChange={(e) => setSlaRespuesta(e.target.value)}
+                      />
+                    </div>
+                    <div className="inc-modal-section" style={{ flex: 1 }}>
+                      <label className="inc-modal-label">
+                        SLA Solución (hrs)
+                      </label>
+                      <input
+                        className="inc-modal-input"
+                        type="number"
+                        min="0"
+                        step="0.5"
+                        placeholder="Ej. 3.5"
+                        value={slaSolucion}
+                        onChange={(e) => setSlaSolucion(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="inc-modal-footer">
@@ -241,13 +368,25 @@ export default function GestionIncidencias() {
               >
                 Volver
               </button>
-              <button
-                className="inc-btn-submit"
-                disabled={!solucionText.trim()}
-                onClick={handleCerrarTicket}
-              >
-                Emitir Ticket y Cerrar
-              </button>
+
+              {modoModal === "despachar" ? (
+                <button
+                  className="inc-btn-submit"
+                  style={{ background: "#2563eb" }}
+                  onClick={handleGuardarDespacho}
+                >
+                  Pasar a En Proceso
+                </button>
+              ) : (
+                <button
+                  className="inc-btn-submit"
+                  style={{ background: "#16a34a" }}
+                  disabled={!solucionText.trim()}
+                  onClick={handleCerrarTicket}
+                >
+                  Clausurar y Solucionar
+                </button>
+              )}
             </div>
           </div>
         </div>
