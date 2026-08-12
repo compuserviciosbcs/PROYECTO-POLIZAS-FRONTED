@@ -11,6 +11,7 @@
   --crm-success-dark: #15803d;
   --crm-danger: #bc2424;
   --crm-danger-light: #fef2f2;
+  --crm-anydesk: #af4c1e;
 }
 
 .inc-container {
@@ -483,4 +484,15 @@
     flex-direction: column;
     gap: 8px;
   }
+}
+
+.inc-card-anydesk {
+  font-size: 0.8rem;
+  color: var(--crm-anydesk);
+  background: #fff7ef;
+  border: 1px solid #feecdb;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 2px;
 }

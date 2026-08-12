@@ -156,6 +156,26 @@ export default function HistorialIncidencias() {
                 <p className="hi-modal-text">{selectedTicket.descripcion}</p>
               </div>
 
+              {selectedTicket.clasificacion?.toLowerCase() === "remota" && (
+                <div className="hi-modal-section">
+                  <label className="hi-modal-label">Acceso Remoto</label>
+                  <div
+                    className="hi-solucion-box"
+                    style={{
+                      background: "#fff7ef",
+                      borderColor: "#fee8db",
+                      color: "#af4c1e",
+                      fontWeight: 600,
+                    }}
+                  >
+                    AnyDesk:{" "}
+                    {selectedTicket.anydesk_id ||
+                      selectedTicket.anydeskId ||
+                      "No registrado"}
+                  </div>
+                </div>
+              )}
+
               <div className="hi-modal-section">
                 <label className="hi-modal-label">
                   Solución técnica aplicada
@@ -191,7 +211,7 @@ export default function HistorialIncidencias() {
               </div>
 
               {/* Datos de cita si fue presencial */}
-              {selectedTicket.clasificacion === "Presencial" &&
+              {selectedTicket.clasificacion?.toLowerCase() === "presencial" &&
                 selectedTicket.cita && (
                   <div className="hi-modal-section">
                     <label className="hi-modal-label">

@@ -59,7 +59,10 @@ export default function GestionIncidencias() {
       tecnico_id: tecnicoId || null,
     };
 
-    if (selectedTicket.clasificacion === "Presencial") {
+    if (
+      selectedTicket.clasificacion === "Presencial" ||
+      selectedTicket.clasificacion === "presencial"
+    ) {
       payload.cita = {
         fecha_cita: fechaCita,
         hora_cita: horaCita,
@@ -153,68 +156,79 @@ export default function GestionIncidencias() {
             No hay solicitudes en este estatus operativo.
           </div>
         ) : (
-          filteredTickets.map((ticket) => (
-            <div
-              key={ticket.ticket}
-              className={`inc-card inc-card--${ticket.estatus.toLowerCase().replace(" ", "")}`}
-            >
-              <div className="inc-card-header">
-                <span className="inc-card-id">{ticket.ticket}</span>
-                <span className="inc-card-type">
-                  {ticket.clasificacion === "Remota" ? "Remoto" : "Presencial"}
-                </span>
-                <span
-                  className={`inc-tag inc-tag--${ticket.estatus.toLowerCase().replace(" ", "")}`}
-                >
-                  {ticket.estatus}
-                </span>
-              </div>
+          filteredTickets.map((ticket) => {
+            const esRemota =
+              ticket.clasificacion === "Remota" ||
+              ticket.clasificacion === "remota";
+            const anydesk = ticket.anydesk_id || ticket.anydeskId;
 
-              <div className="inc-card-body">
-                <h4 className="inc-card-empresa">{ticket.empresaNombre}</h4>
-                <p className="inc-card-asunto">{ticket.asunto}</p>
-                <div className="inc-card-meta">
-                  <span>
-                    Afectado: <strong>{ticket.usuarioAfectado || "—"}</strong>
+            return (
+              <div
+                key={ticket.ticket}
+                className={`inc-card inc-card--${ticket.estatus.toLowerCase().replace(" ", "")}`}
+              >
+                <div className="inc-card-header">
+                  <span className="inc-card-id">{ticket.ticket}</span>
+                  <span className="inc-card-type">
+                    {esRemota ? "Remoto" : "Presencial"}
                   </span>
-                  <span>
-                    Técnico:{" "}
-                    <strong>{ticket.tecnicoAsignado || "Sin asignar"}</strong>
+                  <span
+                    className={`inc-tag inc-tag--${ticket.estatus.toLowerCase().replace(" ", "")}`}
+                  >
+                    {ticket.estatus}
                   </span>
                 </div>
-              </div>
 
-              <div
-                className="inc-card-footer"
-                style={{ gap: "8px", display: "flex" }}
-              >
-                {ticket.estatus === "Abierto" && (
-                  <button
-                    className="inc-btn-manage"
-                    style={{ background: "#2563eb", color: "#fff" }}
-                    onClick={() => handleAbrirDespacho(ticket)}
-                  >
-                    Asignar y Programar
-                  </button>
-                )}
+                <div className="inc-card-body">
+                  <h4 className="inc-card-empresa">{ticket.empresaNombre}</h4>
+                  <p className="inc-card-asunto">{ticket.asunto}</p>
+                  <div className="inc-card-meta">
+                    <span>
+                      Afectado: <strong>{ticket.usuarioAfectado || "—"}</strong>
+                    </span>
+                    <span>
+                      Técnico:{" "}
+                      <strong>{ticket.tecnicoAsignado || "Sin asignar"}</strong>
+                    </span>
+                    {esRemota && (
+                      <span className="inc-card-anydesk">
+                        AnyDesk: <strong>{anydesk || "Sin especificar"}</strong>
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                {ticket.estatus === "En Proceso" && (
-                  <button
-                    className="inc-btn-manage"
-                    style={{ background: "#16a34a", color: "#fff" }}
-                    onClick={() => handleAbrirCierre(ticket)}
-                  >
-                    Registrar Solución y Cerrar
-                  </button>
-                )}
+                <div
+                  className="inc-card-footer"
+                  style={{ gap: "8px", display: "flex" }}
+                >
+                  {ticket.estatus === "Abierto" && (
+                    <button
+                      className="inc-btn-manage"
+                      style={{ background: "#2563eb", color: "#fff" }}
+                      onClick={() => handleAbrirDespacho(ticket)}
+                    >
+                      Asignar y Programar
+                    </button>
+                  )}
+
+                  {ticket.estatus === "En Proceso" && (
+                    <button
+                      className="inc-btn-manage"
+                      style={{ background: "#16a34a", color: "#fff" }}
+                      onClick={() => handleAbrirCierre(ticket)}
+                    >
+                      Registrar Solución y Cerrar
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
       {/* Modal de gestión */}
-
       {selectedTicket && (
         <div className="inc-overlay" onClick={() => setSelectedTicket(null)}>
           <div className="inc-modal" onClick={(e) => e.stopPropagation()}>
@@ -244,6 +258,38 @@ export default function GestionIncidencias() {
                 <p className="inc-modal-text">{selectedTicket.descripcion}</p>
               </div>
 
+              {(selectedTicket.clasificacion === "Remota" ||
+                selectedTicket.clasificacion === "remota") && (
+                <div
+                  className="inc-modal-section"
+                  style={{
+                    background: "#fff5ef",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    border: "1px solid #fed7bf",
+                  }}
+                >
+                  <label
+                    className="inc-modal-label"
+                    style={{ color: "#af531e", fontWeight: "bold" }}
+                  >
+                    Anydesk
+                  </label>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "0.8rem",
+                      fontWeight: "700",
+                      color: "#8a3e1e",
+                    }}
+                  >
+                    {selectedTicket.anydesk_id ||
+                      selectedTicket.anydeskId ||
+                      "No especificado"}
+                  </p>
+                </div>
+              )}
+
               {modoModal === "despachar" && (
                 <>
                   <div className="inc-modal-section">
@@ -258,19 +304,20 @@ export default function GestionIncidencias() {
                     />
                   </div>
 
-                  {selectedTicket.clasificacion === "Presencial" && (
+                  {(selectedTicket.clasificacion === "Presencial" ||
+                    selectedTicket.clasificacion === "presencial") && (
                     <div
                       className="inc-modal-section"
                       style={{
-                        background: "#f0f9ff",
+                        background: "#fff6f0",
                         padding: "12px",
                         borderRadius: "8px",
-                        border: "1px solid #bae6fd",
+                        border: "1px solid #fdd5ba",
                       }}
                     >
                       <label
                         className="inc-modal-label"
-                        style={{ color: "#0284c7", fontWeight: "bold" }}
+                        style={{ color: "#c74702", fontWeight: "bold" }}
                       >
                         Cita para Atención Presencial
                       </label>

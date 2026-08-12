@@ -30,6 +30,7 @@ const mapIncidencia = (i) => ({
   asunto: i.asunto,
   descripcion: i.descripcion,
   estatus: ESTATUS_BD_A_UI[i.estatus] ?? i.estatus,
+  anydesk_id: i.anydesk_id ?? i.anydeskId ?? null,
   clasificacion: CLASIFICACION_BD_A_UI[i.clasificacion] ?? i.clasificacion,
   prioridad: i.prioridad ?? "media",
   fechaCreacion: i.fecha_creacion ?? i.fechaCreacion ?? "",
