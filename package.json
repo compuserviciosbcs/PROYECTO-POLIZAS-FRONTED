@@ -19,6 +19,8 @@
     "@fullcalendar/resource-timeline": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
     "dayjs": "^1.11.21",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "react": "^19.2.6",
     "react-big-calendar": "^1.19.4",
     "react-dom": "^19.2.6",
