@@ -2,7 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import Swal from "sweetalert2";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
-const TOKEN = import.meta.env.VITE_APP_BEARER_TOKEN;
+const getAuthHeaders = (extraHeaders = {}) => {
+  const token = localStorage.getItem("token") || "";
+  return {
+    Authorization: `Bearer ${token}`,
+    ...extraHeaders,
+  };
+};
 
 const GRUPO_ID_MAP = {
   "Pólizas de soporte general TI": 1,
@@ -50,9 +56,7 @@ export function usePolicies(search = "", filter = "Todos") {
       if (busqueda.trim()) params.append("search", busqueda.trim());
 
       const res = await fetch(`${API_BASE_URL}/polizas?${params}`, {
-        headers: {
-          Authorization: `Bearer ${TOKEN}`,
-        },
+        headers: getAuthHeaders(),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message ?? "Error al obtener pólizas");
@@ -114,10 +118,9 @@ export function usePolicies(search = "", filter = "Todos") {
 
       const res = await fetch(url, {
         method,
-        headers: {
+        headers: getAuthHeaders({
           "Content-Type": "application/json",
-          Authorization: `Bearer ${TOKEN}`,
-        },
+        }),
         body: JSON.stringify(payload),
       });
       const json = await res.json();
@@ -185,9 +188,7 @@ export function usePolicies(search = "", filter = "Todos") {
     try {
       const res = await fetch(`${API_BASE_URL}/polizas/${policy.id}`, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${TOKEN}`,
-        },
+        headers: getAuthHeaders(),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message ?? "Error al eliminar");

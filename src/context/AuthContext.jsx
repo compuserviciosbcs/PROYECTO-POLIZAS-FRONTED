@@ -16,6 +16,7 @@ export function AuthProvider({ children }) {
         setUser(JSON.parse(saved));
       } catch {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem("token");
       }
     }
     setLoading(false);
@@ -30,7 +31,15 @@ export function AuthProvider({ children }) {
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Credenciales incorrectas.");
 
-    const userData = { nombre: json.data.nombre, email: json.data.email };
+    if (json.data?.token) {
+      localStorage.setItem("token", json.data.token);
+    }
+
+    const userData = {
+      nombre: json.data.nombre,
+      email: json.data.email,
+    };
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
     setUser(userData);
     return userData;
@@ -38,6 +47,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("token");
     setUser(null);
   };
 

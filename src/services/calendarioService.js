@@ -1,6 +1,12 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const TOKEN = import.meta.env.VITE_APP_BEARER_TOKEN;
+const getAuthHeaders = (extraHeaders = {}) => {
+  const token = localStorage.getItem("token") || "";
+  return {
+    Authorization: `Bearer ${token}`,
+    ...extraHeaders,
+  };
+};
 
 export const calendarioService = {
   getAll: async (filtros = {}) => {
@@ -12,9 +18,7 @@ export const calendarioService = {
     if (filtros.hasta) params.append("hasta", filtros.hasta);
 
     const res = await fetch(`${API_BASE_URL}/calendario?${params}`, {
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      headers: getAuthHeaders(),
     });
     const json = await res.json();
     if (!res.ok)
@@ -25,10 +29,9 @@ export const calendarioService = {
   create: async (datos) => {
     const res = await fetch(`${API_BASE_URL}/calendario`, {
       method: "POST",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      }),
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -39,10 +42,9 @@ export const calendarioService = {
   update: async (id, datos) => {
     const res = await fetch(`${API_BASE_URL}/calendario/${id}`, {
       method: "PUT",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      }),
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -54,9 +56,7 @@ export const calendarioService = {
   delete: async (id) => {
     const res = await fetch(`${API_BASE_URL}/calendario/${id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      headers: getAuthHeaders(),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al eliminar el evento");

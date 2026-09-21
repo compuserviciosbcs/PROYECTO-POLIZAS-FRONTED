@@ -1,6 +1,12 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const TOKEN = import.meta.env.VITE_APP_BEARER_TOKEN;
+const getAuthHeaders = (extraHeaders = {}) => {
+  const token = localStorage.getItem("token") || "";
+  return {
+    Authorization: `Bearer ${token}`,
+    ...extraHeaders,
+  };
+};
 
 export const incidenciasService = {
   getAll: async (filtros = {}) => {
@@ -13,9 +19,7 @@ export const incidenciasService = {
     if (filtros.search?.trim()) params.append("search", filtros.search.trim());
 
     const res = await fetch(`${API_BASE_URL}/incidencias?${params}`, {
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      headers: getAuthHeaders(),
     });
     const json = await res.json();
     if (!res.ok)
@@ -25,9 +29,7 @@ export const incidenciasService = {
 
   getById: async (id) => {
     const res = await fetch(`${API_BASE_URL}/incidencias/${id}`, {
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      headers: getAuthHeaders(),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al obtener incidencia");
@@ -37,10 +39,9 @@ export const incidenciasService = {
   create: async (datos) => {
     const res = await fetch(`${API_BASE_URL}/incidencias`, {
       method: "POST",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      }),
       body: JSON.stringify(datos),
     });
     const json = await res.json();
@@ -53,10 +54,9 @@ export const incidenciasService = {
 
     const res = await fetch(`${API_BASE_URL}/incidencias/${id}/estatus`, {
       method: "PATCH",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      }),
       body: JSON.stringify(payload),
     });
     const json = await res.json();
@@ -67,24 +67,22 @@ export const incidenciasService = {
   cerrar: async (id, datos) => {
     const res = await fetch(`${API_BASE_URL}/incidencias/${id}/cerrar`, {
       method: "PATCH",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      }),
       body: JSON.stringify(datos),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al cerrar incidencia");
-    return json.data ?? json; // { incidencia, bot_payload }
+    return json.data ?? json;
   },
 
   agregarNota: async (id, { autor, texto }) => {
     const res = await fetch(`${API_BASE_URL}/incidencias/${id}/notas`, {
       method: "POST",
-      headers: {
+      headers: getAuthHeaders({
         "Content-Type": "application/json",
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      }),
       body: JSON.stringify({ autor, texto }),
     });
     const json = await res.json();
@@ -93,13 +91,10 @@ export const incidenciasService = {
   },
 
   delete: async (id) => {
-    const res = await fetch(
-      `${API_BASE_URL}/incidencias/${id}`,
-      { headers: { Authorization: `Bearer ${TOKEN}` } },
-      {
-        method: "DELETE",
-      },
-    );
+    const res = await fetch(`${API_BASE_URL}/incidencias/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
     const json = await res.json();
     if (!res.ok)
       throw new Error(json.message ?? "Error al eliminar incidencia");
@@ -116,9 +111,7 @@ export const incidenciasService = {
     if (filtros.hasta) params.append("hasta", filtros.hasta);
 
     const res = await fetch(`${API_BASE_URL}/historial?${params}`, {
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-      },
+      headers: getAuthHeaders(),
     });
     const json = await res.json();
     if (!res.ok) throw new Error(json.message ?? "Error al obtener historial");
