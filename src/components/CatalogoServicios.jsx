@@ -1,4 +1,4 @@
-/* VISTA GENERAL DEL CATALOGO DE SERVICIOS - CRM PROFESSIONAL */
+/* CATALOGO SERVICIOS */
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { TIPOS_SERVICIO } from "../data/servicios.js";
@@ -6,9 +6,9 @@ import "../css/CatalogoServicios.css";
 import { serviciosService } from "../services/servicioService.js";
 
 const TIPO_COLORS = {
-  Remoto: { bg: "#f0fdf4", text: "#166534", dot: "#22c55e" }, // Verde ejecutivo
-  Presencial: { bg: "#eff6ff", text: "#1e40af", dot: "#3b82f6" }, // Azul ejecutivo
-  Otros: { bg: "#f8fafc", text: "#475569", dot: "#64748b" }, // Slate
+  Remoto: { bg: "#f0fdf4", text: "#166534", dot: "#22c55e" },
+  Presencial: { bg: "#eff6ff", text: "#1e40af", dot: "#3b82f6" },
+  Otros: { bg: "#f8fafc", text: "#475569", dot: "#64748b" },
   Mantenimiento: { bg: "#f8fafc", text: "#475569", dot: "#64748b" },
 };
 
