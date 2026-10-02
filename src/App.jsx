@@ -4,6 +4,8 @@ import {
   Routes,
   Route,
   Navigate,
+  Outlet,
+  useLocation,
 } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import LoginPage from "./components/LoginPage.jsx";
@@ -18,8 +20,9 @@ import { useServicios } from "./services/useServicios.js";
 import { usePolicies } from "./services/usePolicies.js";
 import "./App.css";
 
-function PrivateLayout() {
+function PrivateRoute() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading)
     return (
@@ -37,60 +40,53 @@ function PrivateLayout() {
       </div>
     );
 
-  if (!user) return <Navigate to="/login" replace />;
-  return <AppShell />;
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+
+  return <Outlet />;
+}
+
+function LoginPublica() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
+  if (user)
+    return <Navigate to={location.state?.from?.pathname ?? "/"} replace />;
+  return <LoginPage />;
 }
 
 function AppShell() {
-  const {
-    servicios,
-    crear: crearServicio,
-    actualizar: actualizarServicio,
-    eliminar: eliminarServicio,
-  } = useServicios();
-  const { filteredData: polizasAgrupadas } = usePolicies("", "Todos");
-  const catalogoPolizas = Object.values(polizasAgrupadas).flat();
-
   return (
     <div className="app-layout">
       <Sidebar />
       <main className="app-main">
-        <Routes>
-          <Route path="/" element={<Navigate to="/calendario" replace />} />
-          <Route
-            path="/directorio"
-            element={<DirectorioEmpresas catalogoPolizas={catalogoPolizas} />}
-          />
-          <Route path="/calendario" element={<CalendarView />} />
-          <Route
-            path="/servicios"
-            element={
-              <CatalogoServicios
-                servicios={servicios}
-                onCrear={crearServicio}
-                onActualizar={actualizarServicio}
-                onEliminar={eliminarServicio}
-              />
-            }
-          />
-          <Route
-            path="/polizas"
-            element={<CatalogoPolicies catalogoServicios={servicios} />}
-          />
-          <Route path="/incidencias" element={<GestionIncidencias />} />
-          <Route path="/historial" element={<HistorialIncidencias />} />
-          <Route
-            path="*"
-            element={
-              <div className="placeholder-screen">
-                <p>404 - Vista no encontrada</p>
-              </div>
-            }
-          />
-        </Routes>
+        <Outlet />
       </main>
     </div>
   );
+}
+
+function ServiciosPage() {
+  const { servicios, crear, actualizar, eliminar } = useServicios();
+  return (
+    <CatalogoServicios
+      servicios={servicios}
+      onCrear={crear}
+      onActualizar={actualizar}
+      onEliminar={eliminar}
+    />
+  );
+}
+
+function PolizasPage() {
+  const { servicios } = useServicios();
+  return <CatalogoPolicies catalogoServicios={servicios} />;
+}
+
+function DirectorioPage() {
+  const { filteredData: polizasAgrupadas } = usePolicies("", "Todos");
+  const catalogoPolizas = Object.values(polizasAgrupadas).flat();
+  return <DirectorioEmpresas catalogoPolizas={catalogoPolizas} />;
 }
 
 export default function App() {
@@ -99,16 +95,28 @@ export default function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<LoginPublica />} />
-          <Route path="/*" element={<PrivateLayout />} />
+
+          <Route element={<PrivateRoute />}>
+            <Route element={<AppShell />}>
+              <Route index element={<Navigate to="/calendario" replace />} />
+              <Route path="/calendario" element={<CalendarView />} />
+              <Route path="/directorio" element={<DirectorioPage />} />
+              <Route path="/servicios" element={<ServiciosPage />} />
+              <Route path="/polizas" element={<PolizasPage />} />
+              <Route path="/incidencias" element={<GestionIncidencias />} />
+              <Route path="/historial" element={<HistorialIncidencias />} />
+              <Route
+                path="*"
+                element={
+                  <div className="placeholder-screen">
+                    <p>404 - Vista no encontrada</p>
+                  </div>
+                }
+              />
+            </Route>
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>
   );
-}
-
-function LoginPublica() {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
-  return <LoginPage />;
 }
