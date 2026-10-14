@@ -49,6 +49,14 @@ const mapIncidencia = (i) => ({
   notes: i.notas ?? [],
 });
 
+const mergeIncidencia = (previa, nueva) => {
+  const merged = { ...previa };
+  for (const [k, v] of Object.entries(nueva)) {
+    if (v !== null && v !== undefined && v !== "") merged[k] = v;
+  }
+  return merged;
+};
+
 // ─────────────────────────────────────────────────────────────
 export function useIncidencias(filtros = {}) {
   const [incidencias, setIncidencias] = useState([]);
@@ -142,7 +150,7 @@ export function useIncidencias(filtros = {}) {
 
       const incActualizada = mapIncidencia(res.incidencia);
       setIncidencias((prev) =>
-        prev.map((i) => (i.id === id ? incActualizada : i)),
+        prev.map((i) => (i.id === id ? mergeIncidencia(i, incActualizada) : i)),
       );
       return { incidencia: incActualizada, botPayload: res.bot_payload };
     } catch (err) {
@@ -166,10 +174,12 @@ export function useIncidencias(filtros = {}) {
             };
 
       const actualizada = await incidenciasService.cambiarEstatus(id, payload);
+      const nueva = mapIncidencia(actualizada);
+
       setIncidencias((prev) =>
-        prev.map((i) => (i.id === id ? mapIncidencia(actualizada) : i)),
+        prev.map((i) => (i.id === id ? mergeIncidencia(i, nueva) : i)),
       );
-      return mapIncidencia(actualizada);
+      return nueva;
     } catch (err) {
       Swal.fire(
         "Error",
@@ -262,4 +272,26 @@ export function useHistorial(filtros = {}) {
   }, [cargar]);
 
   return { historial, loading, error, recargar: cargar };
+}
+
+// ── hook select tenicod ──
+export function useTecnicos() {
+  const [tecnicos, setTecnicos] = useState([]);
+
+  useEffect(() => {
+    incidenciasService
+      .getTecnicos()
+      .then((data) =>
+        setTecnicos(
+          data.map((t) => ({
+            id: t.id,
+            nombre:
+              t.nombre ?? t.nombre_completo ?? t.name ?? `Técnico ${t.id}`,
+          })),
+        ),
+      )
+      .catch((err) => console.error("useTecnicos:", err));
+  }, []);
+
+  return tecnicos;
 }

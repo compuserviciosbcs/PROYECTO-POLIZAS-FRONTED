@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
-import { useIncidencias } from "../services/useIncidencias.js";
+import { useIncidencias, useTecnicos } from "../services/useIncidencias.js";
 import "../css/GestionIncidencias.css";
 
 const ESTATUS_OPCIONES = ["Todos", "Abierto", "En Proceso"];
@@ -20,8 +20,15 @@ export default function GestionIncidencias() {
   const [jsonVisible, setJsonVisible] = useState(false);
   const [botPayload, setBotPayload] = useState(null);
 
+  const tecnicos = useTecnicos();
+
   const { incidencias, loading, error, cerrar, cambiarEstatus } =
     useIncidencias({ estatus: filterEstatus, search });
+
+  const nombreTecnico = (t) =>
+    t.tecnicoAsignado ||
+    tecnicos.find((x) => String(x.id) === String(t.tecnico_id))?.nombre ||
+    "Sin asignar";
 
   const filteredTickets = incidencias.filter((t) => {
     if (filterEstatus === "Todos") {
@@ -187,8 +194,7 @@ export default function GestionIncidencias() {
                       Afectado: <strong>{ticket.usuarioAfectado || "—"}</strong>
                     </span>
                     <span>
-                      Técnico:{" "}
-                      <strong>{ticket.tecnicoAsignado || "Sin asignar"}</strong>
+                      Técnico: <strong>{nombreTecnico(ticket)}</strong>
                     </span>
                     {esRemota && (
                       <span className="inc-card-anydesk">
@@ -296,12 +302,18 @@ export default function GestionIncidencias() {
                     <label className="inc-modal-label">
                       Técnico Responsable
                     </label>
-                    <input
+                    <select
                       className="inc-modal-input"
-                      placeholder="Nombre o ID del técnico asignado..."
-                      value={tecnicoId}
+                      value={String(tecnicoId)}
                       onChange={(e) => setTecnicoId(e.target.value)}
-                    />
+                    >
+                      <option value="">Selecciona un técnico...</option>
+                      {tecnicos.map((t) => (
+                        <option key={t.id} value={String(t.id)}>
+                          {t.nombre}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {(selectedTicket.clasificacion === "Presencial" ||

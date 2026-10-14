@@ -117,4 +117,13 @@ export const incidenciasService = {
     if (!res.ok) throw new Error(json.message ?? "Error al obtener historial");
     return json.data ?? json;
   },
+
+  getTecnicos: async () => {
+    const res = await fetch(`${API_BASE_URL}/tecnicos`, {
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message ?? "Error al obtener técnicos");
+    return json.data ?? json;
+  },
 };
