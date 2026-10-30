@@ -37,6 +37,7 @@ const mapPoliza = (p) => ({
     : "",
   sla_respuesta: p.sla_respuesta ?? "",
   sla_solucion: p.sla_solucion ?? "",
+  limiteIncidencias: p.limite_incidencias ?? null,
   activa: Boolean(p.activa),
   serviciosIds: Array.isArray(p.servicios) ? p.servicios.map((s) => s.id) : [],
   servicios: Array.isArray(p.servicios) ? p.servicios.map((s) => s.nombre) : [],
@@ -106,6 +107,7 @@ export function usePolicies(search = "", filter = "Todos") {
       precio: policy.precioNum ?? 0,
       sla_respuesta: policy.sla_respuesta,
       sla_solucion: policy.sla_solucion,
+      limite_incidencias: policy.limiteIncidencias || null,
       activa: policy.activa ? 1 : 0,
       servicios_ids: policy.serviciosIds ?? [],
     };

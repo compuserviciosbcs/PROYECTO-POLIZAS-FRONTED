@@ -40,9 +40,22 @@ const mapPolizaVinculada = (p) => ({
 const mapIncidenciaResumen = (i) => ({
   ticket: i.ticket,
   asunto: i.asunto,
+  descripcion: i.descripcion ?? "",
   estatus: i.estatus,
+  clasificacion: i.clasificacion ?? "",
+  prioridad: i.prioridad ?? "",
+  anydeskId: i.anydesk_id ?? "",
+  solucionAplicada: i.solucion_aplicada ?? "",
+  slaRespuestaHoras: i.sla_respuesta_hrs ?? null,
+  slaSolucionHoras: i.sla_solucion_hrs ?? null,
   fecha: i.fecha_creacion ?? i.fecha ?? "",
+  fechaCierre: i.fecha_cierre ?? "",
   tecnico: i.tecnico_nombre ?? i.tecnico ?? "—",
+  usuarioAfectado: i.usuario_nombre ?? "—",
+  usuarioTelefono: i.usuario_telefono ?? "",
+  polizaAsociada: i.poliza_nombre ?? "",
+  servicioNombre: i.servicio_nombre ?? "",
+  servicioTipoNombre: i.servicio_tipo_nombre ?? "",
 });
 
 const mapCambio = (c) => ({

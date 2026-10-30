@@ -60,6 +60,12 @@ export default function PolicyModal({ policy, onClose }) {
                 {policy.sla_solucion}
               </span>
             </div>
+            <div className="kpi-card">
+              <span className="kpi-label">Límite de incidencias</span>
+              <span className="kpi-value">
+                {policy.limiteIncidencias ?? "Sin límite"}
+              </span>
+            </div>
           </div>
 
           {/* Cobertura */}

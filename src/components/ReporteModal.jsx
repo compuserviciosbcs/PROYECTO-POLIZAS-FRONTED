@@ -105,29 +105,46 @@ export default function ReporteModal({ empresa, onClose }) {
         const fecha = (inc.fecha || "—").split("T")[0];
         return [
           inc.ticket || "—",
+          fecha,
+          inc.usuarioAfectado || "—",
           inc.asunto || "—",
           inc.tecnico || "—",
-          fecha,
+          inc.servicioNombre || "—",
           estatus,
+          inc.slaSolucionHoras ? `${inc.slaSolucionHoras} hrs` : "—",
         ];
       });
 
       autoTable(doc, {
         startY: 70,
-        head: [["Ticket", "Asunto", "Técnico asignado", "Fecha", "Estatus"]],
+        head: [
+          [
+            "Ticket",
+            "Fecha",
+            "Solicitante",
+            "Asunto",
+            "Técnico",
+            "Servicio",
+            "Estatus",
+            "SLA Sol.",
+          ],
+        ],
         body:
           rows.length > 0
             ? rows
             : [
                 [
                   "—",
+                  "—",
+                  "—",
                   "No se encontraron tickets en el periodo seleccionado",
+                  "—",
                   "—",
                   "—",
                   "—",
                 ],
               ],
-        styles: { fontSize: 8, cellPadding: 3 },
+        styles: { fontSize: 7.5, cellPadding: 2.5 },
         headStyles: {
           fillColor: [59, 130, 246],
           textColor: 255,
@@ -135,14 +152,17 @@ export default function ReporteModal({ empresa, onClose }) {
         },
         alternateRowStyles: { fillColor: [248, 250, 252] },
         columnStyles: {
-          0: { cellWidth: 26, fontStyle: "bold" },
-          1: { cellWidth: "auto" },
-          2: { cellWidth: 38 },
-          3: { cellWidth: 25 },
-          4: { cellWidth: 28 },
+          0: { cellWidth: 20, fontStyle: "bold" },
+          1: { cellWidth: 18 },
+          2: { cellWidth: 26 },
+          3: { cellWidth: "auto" },
+          4: { cellWidth: 24 },
+          5: { cellWidth: 26 },
+          6: { cellWidth: 22 },
+          7: { cellWidth: 16 },
         },
         didParseCell: (data) => {
-          if (data.section === "body" && data.column.index === 4) {
+          if (data.section === "body" && data.column.index === 6) {
             const raw = String(data.cell.raw).toLowerCase();
             if (raw.includes("solucionado")) {
               data.cell.styles.textColor = [22, 101, 52];
@@ -157,6 +177,57 @@ export default function ReporteModal({ empresa, onClose }) {
           }
         },
       });
+
+      let detalleY = (doc.lastAutoTable?.finalY || 70) + 10;
+      const pageHeight = doc.internal.pageSize.getHeight();
+
+      if (incidenciasFiltradas.length > 0) {
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(30, 41, 59);
+        doc.text("Detalle de solicitudes", 14, detalleY);
+        detalleY += 6;
+
+        incidenciasFiltradas.forEach((inc) => {
+          if (detalleY > pageHeight - 30) {
+            doc.addPage();
+            detalleY = 20;
+          }
+
+          doc.setFillColor(248, 250, 252);
+          doc.roundedRect(14, detalleY - 4, 182, 26, 2, 2, "F");
+
+          doc.setFontSize(9);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text(
+            `${inc.ticket || "—"}  ·  ${inc.asunto || "—"}`,
+            18,
+            detalleY + 1,
+          );
+
+          doc.setFontSize(8);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139);
+          doc.text(
+            `Solicitante: ${inc.usuarioAfectado || "—"}  |  Técnico: ${inc.tecnico || "—"}  |  Servicio: ${inc.servicioNombre || "—"} (${inc.servicioTipoNombre || "—"})`,
+            18,
+            detalleY + 7,
+          );
+          doc.text(
+            `Descripción: ${(inc.descripcion || "—").slice(0, 110)}`,
+            18,
+            detalleY + 13,
+          );
+          doc.text(
+            `Solución aplicada: ${(inc.solucionAplicada || "Sin registrar").slice(0, 110)}`,
+            18,
+            detalleY + 19,
+          );
+
+          detalleY += 32;
+        });
+      }
 
       const nombreSanitizado = (empresa.nombre || "empresa")
         .toLowerCase()

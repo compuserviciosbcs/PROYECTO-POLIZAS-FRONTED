@@ -64,6 +64,17 @@ export const incidenciasService = {
     return json.data ?? json;
   },
 
+  getServiciosDisponibles: async (id) => {
+    const res = await fetch(
+      `${API_BASE_URL}/incidencias/${id}/servicios-disponibles`,
+      { headers: getAuthHeaders() },
+    );
+    const json = await res.json();
+    if (!res.ok)
+      throw new Error(json.message ?? "Error al obtener servicios de la póliza");
+    return json.data ?? json;
+  },
+
   cerrar: async (id, datos) => {
     const res = await fetch(`${API_BASE_URL}/incidencias/${id}/cerrar`, {
       method: "PATCH",

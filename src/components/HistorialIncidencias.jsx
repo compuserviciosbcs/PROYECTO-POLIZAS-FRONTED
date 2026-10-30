@@ -152,6 +152,68 @@ export default function HistorialIncidencias() {
 
             <div className="hi-modal-body">
               <div className="hi-modal-section">
+                <label className="hi-modal-label">Datos generales</label>
+                <div className="hi-kpi-grid">
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Solicitante / Afectado</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.usuarioAfectado || "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Teléfono de contacto</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.usuarioTelefono || "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Técnico asignado</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.tecnicoAsignado || "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Prioridad</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.prioridad || "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Servicio asignado</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.servicioNombre || "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Tipo de servicio</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.servicioTipoNombre || "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Fecha de creación</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.fechaCreacion
+                        ? new Date(selectedTicket.fechaCreacion).toLocaleString(
+                            "es-MX",
+                          )
+                        : "—"}
+                    </span>
+                  </div>
+                  <div className="hi-kpi-card">
+                    <span className="hi-kpi-lbl">Fecha de cierre</span>
+                    <span className="hi-kpi-val">
+                      {selectedTicket.fechaCierre
+                        ? new Date(selectedTicket.fechaCierre).toLocaleString(
+                            "es-MX",
+                          )
+                        : "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="hi-modal-section">
                 <label className="hi-modal-label">Problema reportado</label>
                 <p className="hi-modal-text">{selectedTicket.descripcion}</p>
               </div>

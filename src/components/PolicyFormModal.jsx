@@ -18,6 +18,7 @@ const EMPTY_FORM = {
   serviciosIds: [],
   sla_respuesta: "",
   sla_solucion: "",
+  limiteIncidencias: "",
   activa: true,
 };
 
@@ -46,6 +47,7 @@ export default function PolicyFormModal({
           grupo: groupName,
           descuento: policy.descuento ?? 0,
           serviciosIds: policy.serviciosIds ?? [],
+          limiteIncidencias: policy.limiteIncidencias ?? "",
         }
       : { ...EMPTY_FORM },
   );
@@ -139,6 +141,13 @@ export default function PolicyFormModal({
     if (form.serviciosIds.length === 0)
       e.serviciosIds = "Selecciona al menos un servicio";
 
+    if (
+      form.limiteIncidencias !== "" &&
+      (!Number.isInteger(Number(form.limiteIncidencias)) ||
+        Number(form.limiteIncidencias) < 1)
+    )
+      e.limiteIncidencias = "Debe ser un entero positivo";
+
     return e;
   };
 
@@ -164,6 +173,8 @@ export default function PolicyFormModal({
         precioNum: total,
         descuento: form.descuento,
         serviciosIds: form.serviciosIds,
+        limiteIncidencias:
+          form.limiteIncidencias === "" ? null : Number(form.limiteIncidencias),
       },
       grupo: form.grupo,
       isEditing,
@@ -314,6 +325,22 @@ export default function PolicyFormModal({
               />
               {errors.cobertura && (
                 <span className="pf-error-msg">{errors.cobertura}</span>
+              )}
+            </div>
+
+            <div className="pf-field">
+              <label className="pf-label">Límite de incidencias</label>
+              <input
+                className={`pf-input ${errors.limiteIncidencias ? "pf-input--error" : ""}`}
+                placeholder="Ej. 10 (vacío = sin límite)"
+                value={form.limiteIncidencias}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, "");
+                  setField("limiteIncidencias", val);
+                }}
+              />
+              {errors.limiteIncidencias && (
+                <span className="pf-error-msg">{errors.limiteIncidencias}</span>
               )}
             </div>
 

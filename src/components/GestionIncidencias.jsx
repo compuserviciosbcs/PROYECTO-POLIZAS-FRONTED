@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
 import { useIncidencias, useTecnicos } from "../services/useIncidencias.js";
+import { incidenciasService } from "../services/incidenciasService.js";
 import "../css/GestionIncidencias.css";
 
 const ESTATUS_OPCIONES = ["Todos", "Abierto", "En Proceso"];
@@ -11,6 +12,8 @@ export default function GestionIncidencias() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [modoModal, setModoModal] = useState("");
   const [tecnicoId, setTecnicoId] = useState("");
+  const [servicioId, setServicioId] = useState("");
+  const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
   const [fechaCita, setFechaCita] = useState("");
   const [horaCita, setHoraCita] = useState("");
   const [direccionCita, setDireccionCita] = useState("");
@@ -41,6 +44,8 @@ export default function GestionIncidencias() {
     setSelectedTicket(ticket);
     setModoModal("despachar");
     setTecnicoId(ticket.tecnico_id || "");
+    setServicioId(ticket.servicio_id || "");
+    setServiciosDisponibles([]);
     if (ticket.cita) {
       setFechaCita(ticket.cita.fecha_cita || "");
       setHoraCita(ticket.cita.hora_cita || "");
@@ -50,6 +55,11 @@ export default function GestionIncidencias() {
       setHoraCita("");
       setDireccionCita("");
     }
+
+    incidenciasService
+      .getServiciosDisponibles(ticket.id)
+      .then(setServiciosDisponibles)
+      .catch((err) => console.error("getServiciosDisponibles:", err));
   };
 
   const handleAbrirCierre = (ticket) => {
@@ -64,6 +74,7 @@ export default function GestionIncidencias() {
     const payload = {
       estatus: "En Proceso",
       tecnico_id: tecnicoId || null,
+      servicio_id: servicioId || null,
     };
 
     if (
@@ -196,6 +207,20 @@ export default function GestionIncidencias() {
                     <span>
                       Técnico: <strong>{nombreTecnico(ticket)}</strong>
                     </span>
+                    {ticket.servicioNombre && (
+                      <span>
+                        Servicio: <strong>{ticket.servicioNombre}</strong>
+                      </span>
+                    )}
+                    {ticket.limiteIncidencias != null && (
+                      <span>
+                        Incidencias de póliza:{" "}
+                        <strong>
+                          {ticket.contadorIncidencias ?? 0}/
+                          {ticket.limiteIncidencias}
+                        </strong>
+                      </span>
+                    )}
                     {esRemota && (
                       <span className="inc-card-anydesk">
                         AnyDesk: <strong>{anydesk || "Sin especificar"}</strong>
@@ -311,6 +336,29 @@ export default function GestionIncidencias() {
                       {tecnicos.map((t) => (
                         <option key={t.id} value={String(t.id)}>
                           {t.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="inc-modal-section">
+                    <label className="inc-modal-label">
+                      Servicio de la póliza
+                    </label>
+                    <select
+                      className="inc-modal-input"
+                      value={String(servicioId)}
+                      onChange={(e) => setServicioId(e.target.value)}
+                      disabled={serviciosDisponibles.length === 0}
+                    >
+                      <option value="">
+                        {serviciosDisponibles.length === 0
+                          ? "Sin servicios disponibles en la póliza"
+                          : "Selecciona un servicio..."}
+                      </option>
+                      {serviciosDisponibles.map((s) => (
+                        <option key={s.id} value={String(s.id)}>
+                          {s.nombre} ({s.tipo_nombre})
                         </option>
                       ))}
                     </select>
