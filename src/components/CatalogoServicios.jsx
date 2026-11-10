@@ -7,7 +7,7 @@ import { serviciosService } from "../services/servicioService.js";
 
 const TIPO_COLORS = {
   Remoto: { bg: "#f0fdf4", text: "#166534", dot: "#22c55e" },
-  Presencial: { bg: "#eff6ff", text: "#1e40af", dot: "#3b82f6" },
+  Presencial: { bg: "#eef1fb", text: "#1a2f7a", dot: "#2541b8" },
   Otros: { bg: "#f8fafc", text: "#475569", dot: "#64748b" },
   Mantenimiento: { bg: "#f8fafc", text: "#475569", dot: "#64748b" },
 };
@@ -64,7 +64,7 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
           title: "Registro Actualizado",
           text: `${servicioEditado.nombre} se guardó correctamente en el catálogo.`,
           icon: "success",
-          confirmButtonColor: "#2563eb",
+          confirmButtonColor: "#2541b8",
           timer: 2000,
         });
 
@@ -83,7 +83,7 @@ function ServiceFormModal({ servicio, onClose, onSave }) {
           title: "Servicio Registrado",
           text: `${servicioGuardado.nombre} Servicio Registrado.`,
           icon: "success",
-          confirmButtonColor: "#2563eb",
+          confirmButtonColor: "#2541b8",
           timer: 2000,
         });
 
@@ -306,7 +306,7 @@ export default function CatalogoServicios() {
             title: "Baja Procesada",
             text: `${s.nombre} fue removido del sistema.`,
             icon: "success",
-            confirmButtonColor: "#2563eb",
+            confirmButtonColor: "#2541b8",
             timer: 2000,
           });
         } catch (error) {

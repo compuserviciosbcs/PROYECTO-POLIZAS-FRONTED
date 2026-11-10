@@ -110,7 +110,7 @@ export function useEmpresas(filtros = {}) {
         title: "Empresa creada",
         text: `${mapeada.nombre} fue añadida correctamente.`,
         icon: "success",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#2541b8",
         timer: 2200,
         timerProgressBar: true,
       });
@@ -148,7 +148,7 @@ export function useEmpresas(filtros = {}) {
         title: "Cambios guardados",
         text: `${mapeada.nombre} fue actualizada correctamente.`,
         icon: "success",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#2541b8",
         timer: 2200,
         timerProgressBar: true,
       });
@@ -183,7 +183,7 @@ export function useEmpresas(filtros = {}) {
       Swal.fire({
         title: "Eliminada",
         icon: "success",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#2541b8",
         timer: 2000,
         timerProgressBar: true,
       });

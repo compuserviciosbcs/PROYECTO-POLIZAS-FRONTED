@@ -127,7 +127,7 @@ export function useIncidencias(filtros = {}) {
         title: "Incidencia creada",
         text: `Folio ${creada.ticket} registrado correctamente.`,
         icon: "success",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#2541b8",
         timer: 2000,
         timerProgressBar: true,
       });

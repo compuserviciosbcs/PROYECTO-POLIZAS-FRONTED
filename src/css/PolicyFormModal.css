@@ -5,8 +5,8 @@
   --crm-text-muted: #64748b;
   --crm-border-color: #e2e8f0;
   --crm-border-light: #f1f5f9;
-  --crm-primary: #2563eb;
-  --crm-primary-dark: #1d4ed8;
+  --crm-primary: #2541b8;
+  --crm-primary-dark: #1a2f7a;
   --crm-danger: #dc2626;
   --crm-danger-light: #fef2f2;
 }
@@ -262,8 +262,8 @@
   align-self: flex-start;
 }
 .pf-add-servicio:hover {
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  background: #eef1fb;
+  border-color: #c3cdf7;
 }
 
 .pf-toggle-row {
@@ -436,10 +436,10 @@
   background: #f8fafc;
 }
 .pf-srv-item--checked {
-  background: #eff6ff;
+  background: #eef1fb;
 }
 .pf-srv-item--checked:hover {
-  background: #dbeafe;
+  background: #dde3fb;
 }
 
 .pf-srv-checkbox {

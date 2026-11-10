@@ -25,7 +25,7 @@ export default function Sidebar() {
       title: "¿Cerrar sesión?",
       icon: "question",
       showCancelButton: true,
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#2541b8",
       cancelButtonColor: "#6b7280",
       confirmButtonText: "Sí, salir",
       cancelButtonText: "Cancelar",

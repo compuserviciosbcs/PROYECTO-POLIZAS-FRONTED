@@ -155,7 +155,7 @@ export function usePolicies(search = "", filter = "Todos") {
         title: isEditing ? "Póliza actualizada" : "Póliza creada",
         text: `${guardada.nombre} se guardó correctamente.`,
         icon: "success",
-        confirmButtonColor: "#2563eb",
+        confirmButtonColor: "#2541b8",
         timer: 1800,
         timerProgressBar: true,
       });
@@ -204,7 +204,7 @@ export function usePolicies(search = "", filter = "Todos") {
         title: "Eliminada",
         text: `${policy.nombre} fue eliminada del catálogo.`,
         icon: "success",
-        confirmButtonColor: "#2563eb",
+        confirmButtonColor: "#2541b8",
         timer: 1500,
         timerProgressBar: true,
       });

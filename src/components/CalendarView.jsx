@@ -40,7 +40,7 @@ export default function CalendarView() {
         </p>
       `,
       icon: esIncidencia ? "warning" : "info",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#2541b8",
       confirmButtonText: "Cerrar",
       showDenyButton: true,
       denyButtonText: "Eliminar evento",

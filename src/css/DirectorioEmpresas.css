@@ -5,8 +5,8 @@
   --crm-text-muted: #64748b;
   --crm-border-color: #e2e8f0;
   --crm-border-light: #f1f5f9;
-  --crm-primary: #2563eb;
-  --crm-primary-dark: #1d4ed8;
+  --crm-primary: #2541b8;
+  --crm-primary-dark: #1a2f7a;
   --crm-danger: #dc2626;
   --crm-danger-light: #fef2f2;
 }
@@ -220,7 +220,7 @@
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(135deg, #2541b8, #1a2f7a);
   color: #fff;
   font-weight: 700;
   font-size: 1.15rem;
@@ -337,8 +337,8 @@
   white-space: nowrap;
 }
 .dir-mini-badge--blue {
-  background: #eff6ff;
-  color: #1e40af;
+  background: #eef1fb;
+  color: #1a2f7a;
 }
 .dir-mini-badge--gray {
   background: #f8fafc;

@@ -22,8 +22,8 @@ const ESTATUS_CONFIG = {
 const CAMBIO_CONFIG = {
   Alta: { bg: "#dcfce7", text: "#166534" },
   Baja: { bg: "#fee2e2", text: "#b91c1c" },
-  Modificación: { bg: "#eff6ff", text: "#1d4ed8" },
-  Modificacion: { bg: "#eff6ff", text: "#1d4ed8" },
+  Modificación: { bg: "#eef1fb", text: "#1a2f7a" },
+  Modificacion: { bg: "#eef1fb", text: "#1a2f7a" },
   Renovación: { bg: "#faf5ff", text: "#6b21a8" },
 };
 
@@ -317,7 +317,7 @@ export default function EmpresaExpediente({
       title: "Póliza vinculada",
       text: `${vinculada.nombre || "La póliza"} fue vinculada correctamente.`,
       icon: "success",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#2541b8",
       timer: 2000,
       timerProgressBar: true,
     });

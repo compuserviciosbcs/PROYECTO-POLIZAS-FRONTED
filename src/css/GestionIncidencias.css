@@ -5,8 +5,8 @@
   --crm-text-muted: #64748b;
   --crm-border-color: #e2e8f0;
   --crm-border-light: #f1f5f9;
-  --crm-primary: #2563eb;
-  --crm-primary-dark: #1d4ed8;
+  --crm-primary: #2541b8;
+  --crm-primary-dark: #1a2f7a;
   --crm-success: #16a34a;
   --crm-success-dark: #15803d;
   --crm-danger: #bc2424;
@@ -188,8 +188,8 @@
   color: #b91c1c;
 }
 .inc-tag--enproceso {
-  background: #eff6ff;
-  color: #1e40af;
+  background: #eef1fb;
+  color: #1a2f7a;
 }
 .inc-tag--pendiente {
   background: #fff7ed;

@@ -146,7 +146,7 @@ export default function ReporteModal({ empresa, onClose }) {
               ],
         styles: { fontSize: 7.5, cellPadding: 2.5 },
         headStyles: {
-          fillColor: [59, 130, 246],
+          fillColor: [37, 65, 184],
           textColor: 255,
           fontStyle: "bold",
         },
@@ -304,7 +304,7 @@ export default function ReporteModal({ empresa, onClose }) {
               </span>
               <span
                 className="vp-preview-meta"
-                style={{ fontWeight: 700, color: "#1d4ed8" }}
+                style={{ fontWeight: 700, color: "#1a2f7a" }}
               >
                 {incidenciasFiltradas.length} encontradas
               </span>

@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import { calendarioService } from "../services/calendarioService.js";
 
 const COLOR_POR_TIPO = {
-  mantenimiento: { bg: "#3b82f6", border: "#2563eb" },
+  mantenimiento: { bg: "#2541b8", border: "#1a2f7a" },
   incidencia: { bg: "#f97316", border: "#ea580c" },
 };
 
@@ -71,7 +71,7 @@ export function useCalendario(filtros = {}) {
       Swal.fire({
         title: "Mantenimiento agendado",
         icon: "success",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#2541b8",
         timer: 1800,
         timerProgressBar: true,
       });

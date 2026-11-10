@@ -96,7 +96,7 @@ export default function GestionIncidencias() {
         title: "Ticket en proceso",
         text: `${selectedTicket.ticket} — Asignado y agendado correctamente.`,
         icon: "info",
-        confirmButtonColor: "#3b82f6",
+        confirmButtonColor: "#2541b8",
         timer: 2000,
         timerProgressBar: true,
       });
@@ -122,7 +122,7 @@ export default function GestionIncidencias() {
       title: "Ticket cerrado",
       text: `${resultado.incidencia.ticket} — Solución registrada correctamente.`,
       icon: "success",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#2541b8",
       timer: 2000,
       timerProgressBar: true,
     });
@@ -236,7 +236,7 @@ export default function GestionIncidencias() {
                   {ticket.estatus === "Abierto" && (
                     <button
                       className="inc-btn-manage"
-                      style={{ background: "#2563eb", color: "#fff" }}
+                      style={{ background: "#2541b8", color: "#fff" }}
                       onClick={() => handleAbrirDespacho(ticket)}
                     >
                       Asignar y Programar
@@ -479,7 +479,7 @@ export default function GestionIncidencias() {
               {modoModal === "despachar" ? (
                 <button
                   className="inc-btn-submit"
-                  style={{ background: "#2563eb" }}
+                  style={{ background: "#2541b8" }}
                   onClick={handleGuardarDespacho}
                 >
                   Pasar a En Proceso
